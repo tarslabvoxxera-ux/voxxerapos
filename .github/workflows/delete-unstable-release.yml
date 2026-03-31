@@ -5,6 +5,9 @@ on:
     branches:
     - master
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   delete_unstable_release:
     runs-on: ubuntu-latest
