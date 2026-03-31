@@ -94,7 +94,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path $phpDir | Out-Null
 
           # PHP 8.1 NTS x64 – non-thread-safe for embedded use
-          $phpUrl  = "https://windows.php.net/downloads/releases/php-8.1.31-nts-Win32-vs16-x64.zip"
+          $phpUrl  = "https://windows.php.net/downloads/releases/archives/php-8.1.28-nts-Win32-vs16-x64.zip"
           $zipFile = "php-win.zip"
 
           Write-Host "Downloading portable PHP for Windows..."
@@ -129,8 +129,8 @@ jobs:
 
           # static-php-cli bulk builds – PHP 8.1 CLI, macOS x86_64
           # Check https://dl.static-php.dev/static-php-cli/bulk/ for latest version
-          PHP_URL="https://dl.static-php.dev/static-php-cli/bulk/2.4.0/php-8.1-cli-macos-x86_64.tar.gz"
-          FALLBACK_URL="https://dl.static-php.dev/static-php-cli/bulk/2.3.0/php-8.1-cli-macos-x86_64.tar.gz"
+          PHP_URL="https://dl.static-php.dev/static-php-cli/common/php-8.1.28-cli-macos-x86_64.tar.gz"
+          FALLBACK_URL="https://dl.static-php.dev/static-php-cli/common/php-8.1.28-cli-macos-aarch64.tar.gz"
 
           echo "Downloading portable PHP for macOS..."
           if ! curl -fsSL "$PHP_URL" -o php.tar.gz; then
