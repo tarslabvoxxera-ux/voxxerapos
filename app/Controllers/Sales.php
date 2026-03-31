@@ -311,6 +311,23 @@ class Sales extends Secure_Controller
     }
 
     /**
+     * Stores user overrides for GST / CGST splits
+     */
+    public function postSetGstOverride(): void
+    {
+        $group = $this->request->getPost('group');
+        $cgst = $this->request->getPost('cgst_amt');
+        $sgst = $this->request->getPost('sgst_amt');
+        
+        $overrides = $this->session->get('gst_overrides') ?? [];
+        $overrides[$group] = [
+            'cgst' => $cgst,
+            'sgst' => $sgst
+        ];
+        $this->session->set('gst_overrides', $overrides);
+    }
+
+    /**
      * Sets the invoice number. Used in app/Views/sales/register.php
      *
      * @return void
@@ -754,6 +771,79 @@ class Sales extends Secure_Controller
             $data['tax_id'] = $customer_info->tax_id;
         }
         $tax_details = $this->tax_lib->get_taxes($data['cart']);    // TODO: Duplicated code
+        
+        // ── GST / CGST Editable Split ──
+        $gst_overrides = $this->session->get('gst_overrides') ?? [];
+        $split_taxes = [];
+        $diff_cgst = [];
+        $diff_sgst = [];
+        
+        foreach ($tax_details[0] as $tax_group_index => $tax) {
+            $override = $gst_overrides[$tax_group_index] ?? null;
+            $half_rate = round((float)$tax['tax_rate'] / 2, 4);
+            
+            $auto_sgst_amt = round((float)$tax['sale_tax_amount'] / 2, 4);
+            $auto_cgst_amt = (float)$tax['sale_tax_amount'] - $auto_sgst_amt;
+            
+            if ($override) {
+                $cgst_amt = (float)$override['cgst'];
+                $sgst_amt = (float)$override['sgst'];
+            } else {
+                $cgst_amt = $auto_cgst_amt;
+                $sgst_amt = $auto_sgst_amt;
+            }
+
+            $cgst = $tax;
+            $cgst['tax_group'] = 'CGST';
+            $cgst['tax_rate']  = $half_rate;
+            $cgst['sale_tax_amount'] = $cgst_amt;
+            
+            $sgst = $tax;
+            $sgst['tax_group'] = 'SGST';
+            $sgst['tax_rate']  = $half_rate;
+            $sgst['sale_tax_amount'] = $sgst_amt;
+            
+            $split_taxes[$tax_group_index . '_CGST'] = $cgst;
+            $split_taxes[$tax_group_index . '_SGST'] = $sgst;
+            
+            $diff_cgst[$tax['tax_group']] = $cgst_amt - $auto_cgst_amt;
+            $diff_sgst[$tax['tax_group']] = $sgst_amt - $auto_sgst_amt;
+        }
+        $tax_details[0] = $split_taxes;
+        
+        $split_item_taxes = [];
+        $applied_diff = [];
+        foreach ($tax_details[1] as $item_tax) {
+            $orig_name = $item_tax['name'];
+            $half_percent = round((float)$item_tax['percent'] / 2, 4);
+            $half_amt = round((float)$item_tax['item_tax_amount'] / 2, 4);
+            $rest_amt = (float)$item_tax['item_tax_amount'] - $half_amt;
+            
+            $cgst_item = $item_tax;
+            $cgst_item['name'] = 'CGST';
+            $cgst_item['percent'] = $half_percent;
+            $cgst_item['item_tax_amount'] = $rest_amt; 
+            
+            $sgst_item = $item_tax;
+            $sgst_item['name'] = 'SGST';
+            $sgst_item['percent'] = $half_percent;
+            $sgst_item['item_tax_amount'] = $half_amt;
+            
+            // Apply the user's manual adjustment to the first occurrence
+            if (!isset($applied_diff[$orig_name])) {
+                if (isset($diff_cgst[$orig_name])) $cgst_item['item_tax_amount'] += $diff_cgst[$orig_name];
+                if (isset($diff_sgst[$orig_name])) $sgst_item['item_tax_amount'] += $diff_sgst[$orig_name];
+                $applied_diff[$orig_name] = true;
+            }
+
+            $split_item_taxes[] = $cgst_item;
+            $split_item_taxes[] = $sgst_item;
+        }
+        $tax_details[1] = $split_item_taxes;
+        
+        $this->session->remove('gst_overrides');
+        // ───────────────────────────────
+
         $data['taxes'] = $tax_details[0];
         $data['discount'] = $this->sale_lib->get_discount();
         $data['payments'] = $this->sale_lib->get_payments();
@@ -1214,6 +1304,17 @@ class Sales extends Secure_Controller
         $data['stock_location'] = $this->sale_lib->get_sale_location();
         $data['tax_exclusive_subtotal'] = $this->sale_lib->get_subtotal(true, true);
         $tax_details = $this->tax_lib->get_taxes($data['cart']);    // TODO: Duplicated code.
+        
+        // ── Apply GST Override to Total Calculation ONLY ──
+        $gst_overrides = $this->session->get('gst_overrides') ?? [];
+        foreach ($tax_details[0] as $tax_group_index => &$tax) {
+            if (isset($gst_overrides[$tax_group_index])) {
+                $tax['sale_tax_amount'] = (float)$gst_overrides[$tax_group_index]['cgst'] + (float)$gst_overrides[$tax_group_index]['sgst'];
+            }
+        }
+        unset($tax);
+        // ────────────────────────────────────────────────
+        
         $data['taxes'] = $tax_details[0];
         $data['discount'] = $this->sale_lib->get_discount();
         $data['payments'] = $this->sale_lib->get_payments();

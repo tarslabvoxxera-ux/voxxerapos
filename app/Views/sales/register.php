@@ -384,6 +384,50 @@ helper('url');
                     <th style="width: 55%;"><?= (float)$tax['tax_rate'] . '% ' . $tax['tax_group'] ?></th>
                     <th style="width: 45%; text-align: right;"><?= to_currency_tax($tax['sale_tax_amount']) ?></th>
                 </tr>
+                <?php
+                    $gst_half_rate  = round((float)$tax['tax_rate'] / 2, 4);
+                    $gst_half_amt   = round((float)$tax['sale_tax_amount'] / 2, 4);
+                    $cgst_half_amt  = (float)$tax['sale_tax_amount'] - $gst_half_amt;
+                    $safe_idx       = esc($tax_group_index);
+                ?>
+                <tr id="gst_row_<?= $safe_idx ?>">
+                    <th style="width: 55%; font-size: 90%; color: #555;">
+                        CGST (<?= $gst_half_rate ?>%)
+                    </th>
+                    <th style="width: 45%; text-align: right;">
+                        <span class="input-group input-group-sm" style="justify-content:flex-end;">
+                            <?= form_input([
+                                'type'        => 'number',
+                                'step'        => '0.0001',
+                                'id'          => 'cgst_amt_' . $safe_idx,
+                                'name'        => 'cgst_amt_' . $safe_idx,
+                                'class'       => 'form-control input-sm gst-input cgst-input',
+                                'value'       => $cgst_half_amt,
+                                'data-group'  => $safe_idx,
+                                'style'       => 'width:90px; display:inline-block; text-align:right;',
+                            ]) ?>
+                        </span>
+                    </th>
+                </tr>
+                <tr id="sgst_row_<?= $safe_idx ?>">
+                    <th style="width: 55%; font-size: 90%; color: #555;">
+                        SGST (<?= $gst_half_rate ?>%)
+                    </th>
+                    <th style="width: 45%; text-align: right;">
+                        <span class="input-group input-group-sm" style="justify-content:flex-end;">
+                            <?= form_input([
+                                'type'        => 'number',
+                                'step'        => '0.0001',
+                                'id'          => 'sgst_amt_' . $safe_idx,
+                                'name'        => 'sgst_amt_' . $safe_idx,
+                                'class'       => 'form-control input-sm gst-input sgst-input',
+                                'value'       => $gst_half_amt,
+                                'data-group'  => $safe_idx,
+                                'style'       => 'width:90px; display:inline-block; text-align:right;',
+                            ]) ?>
+                        </span>
+                    </th>
+                </tr>
             <?php } ?>
             <tr>
                 <th style="width: 55%; font-size: 150%"><?= lang(ucfirst($controller_name) . '.total') ?></th>
@@ -578,6 +622,31 @@ helper('url');
         const redirect = function() {
             window.location.href = "<?= site_url('sales'); ?>";
         };
+
+        // ── GST / CGST editable split ──────────────────────────────────────
+        // When user edits CGST, auto-update the SGST to keep them summing to total
+        $(document).on('change', '.cgst-input', function() {
+            var group     = $(this).data('group');
+            var cgstVal   = parseFloat($(this).val()) || 0;
+            var $sgst = $('#sgst_amt_' + group);
+            $.post("<?= site_url('sales/setGstOverride'); ?>", {
+                'group'    : group,
+                'cgst_amt' : cgstVal,
+                'sgst_amt' : parseFloat($sgst.val()) || 0
+            }, redirect);
+        });
+
+        $(document).on('change', '.sgst-input', function() {
+            var group    = $(this).data('group');
+            var sgstVal  = parseFloat($(this).val()) || 0;
+            var $cgst    = $('#cgst_amt_' + group);
+            $.post("<?= site_url('sales/setGstOverride'); ?>", {
+                'group'    : group,
+                'cgst_amt' : parseFloat($cgst.val()) || 0,
+                'sgst_amt' : sgstVal
+            }, redirect);
+        });
+        // ──────────────────────────────────────────────────────────────────
 
         $("#remove_customer_button").click(function() {
             $.post("<?= site_url('sales/removeCustomer'); ?>", redirect);
