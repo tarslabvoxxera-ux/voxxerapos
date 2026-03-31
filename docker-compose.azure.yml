@@ -1,0 +1,44 @@
+version: '3.8'
+
+# Azure Production Docker Compose Configuration
+# This is a reference configuration - Azure App Service may use different deployment method
+
+services:
+  ospos:
+    build:
+      context: .
+      target: ospos
+    container_name: voxxera_pos_production
+    restart: always
+    ports:
+      - "80:80"
+    environment:
+      - CI_ENVIRONMENT=production
+      # Database connection - use Azure MySQL
+      - MYSQL_HOST_NAME=${AZURE_MYSQL_HOST}
+      - MYSQL_DB_NAME=${AZURE_MYSQL_DB}
+      - MYSQL_USERNAME=${AZURE_MYSQL_USER}
+      - MYSQL_PASSWORD=${AZURE_MYSQL_PASSWORD}
+      - PHP_TIMEZONE=Asia/Kolkata
+      # Security
+      - HTTPS_ENABLED=true
+    volumes:
+      # Persist uploads and logs
+      - uploads:/app/public/uploads
+      - logs:/app/writable/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  uploads:
+    driver: local
+  logs:
+    driver: local
+
+# Note: Azure MySQL is external service, not in docker-compose
+# Connection details provided via environment variables
+

@@ -1,0 +1,70 @@
+version: '3.8'
+
+# Production-Ready Local Deployment
+# Accessible on your network with full security
+
+volumes:
+    uploads:
+        driver: local
+    logs:
+        driver: local
+    mysql:
+        driver: local
+
+networks:
+    voxxera_net:
+        driver: bridge
+
+services:
+    mysql:
+        image: mariadb:10.6
+        container_name: voxxera_mysql_prod
+        restart: unless-stopped
+        ports:
+            - "3306:3306"
+        networks:
+            - voxxera_net
+        volumes:
+            - ./voxxera_pos_azure_20251204_103808.sql:/docker-entrypoint-initdb.d/database.sql
+            - mysql:/var/lib/mysql:rw
+        environment:
+            - MYSQL_ROOT_PASSWORD=ds4Q6YvBd/zaC5EaBudaeSAkgHfuoT1T
+            - MYSQL_DATABASE=ospos
+            - MYSQL_USER=dbadmin
+            - MYSQL_PASSWORD=ds4Q6YvBd/zaC5EaBudaeSAkgHfuoT1T
+        healthcheck:
+            test: ["CMD", "mariadb-admin", "ping", "-h", "localhost"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    voxxera:
+        build:
+            context: .
+            target: ospos
+        container_name: voxxera_pos_prod
+        restart: unless-stopped
+        depends_on:
+            mysql:
+                condition: service_healthy
+        ports:
+            - "8888:80"
+        networks:
+            - voxxera_net
+        volumes:
+            - .:/app
+            - uploads:/app/public/uploads
+            - logs:/app/writable/logs
+        environment:
+            - CI_ENVIRONMENT=production
+            - MYSQL_USERNAME=dbadmin
+            - MYSQL_PASSWORD=ds4Q6YvBd/zaC5EaBudaeSAkgHfuoT1T
+            - MYSQL_DB_NAME=ospos
+            - MYSQL_HOST_NAME=mysql
+            - PHP_TIMEZONE=Asia/Kolkata
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost/"]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+

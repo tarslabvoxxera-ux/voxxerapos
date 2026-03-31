@@ -1,0 +1,547 @@
+/* ==========================================================================
+   VOXXERA LUMINA - PREMIUM LIGHT THEME (iOS / macOS Inspired)
+   ========================================================================== */
+
+/* Typography & Base Variables */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --bg-color: #F8F9FB;
+    --surface-color: rgba(255, 255, 255, 0.85);
+    --surface-hover: rgba(255, 255, 255, 1);
+    --primary-color: #2E5BFF;
+    --primary-hover: #1E44D3;
+    --text-primary: #111424;
+    --text-muted: #64748B;
+    --border-color: rgba(0, 0, 0, 0.04);
+    --border-glass: rgba(255, 255, 255, 0.8);
+    --shadow-soft: 0 10px 40px rgba(0, 0, 0, 0.03);
+    --shadow-dock: 0 20px 50px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+    --shadow-lift: 0 20px 40px rgba(46, 91, 255, 0.12), 0 0 0 1px rgba(46, 91, 255, 0.1);
+    --radius-lg: 24px;
+    --radius-md: 14px;
+    --radius-pill: 50px;
+    --glass-bg: rgba(255, 255, 255, 0.75);
+    --glass-blur: blur(30px);
+}
+
+/* Base Body Override with Mesh Gradient */
+body {
+    background-color: var(--bg-color) !important;
+    background-image: 
+        radial-gradient(circle at 15% 50%, rgba(46, 91, 255, 0.04), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(0, 240, 255, 0.03), transparent 25%),
+        radial-gradient(circle at 50% 100%, rgba(46, 91, 255, 0.02), transparent 40%) !important;
+    background-attachment: fixed !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    color: var(--text-primary) !important;
+    -webkit-font-smoothing: antialiased;
+    margin-bottom: 50px !important;
+}
+
+/* --------------------------------------------------------------------------
+   TOPBAR FIXES (System Header)
+   -------------------------------------------------------------------------- */
+.topbar {
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-muted) !important;
+    padding: 10px 40px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.3px !important;
+    opacity: 0.8 !important;
+    transition: opacity 0.3s ease !important;
+}
+.topbar:hover { opacity: 1 !important; }
+
+.topbar .container {
+    display: grid !important;
+    grid-template-columns: 1fr auto 1fr !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    max-width: 1400px !important;
+}
+
+.topbar .navbar-left {
+    justify-self: start !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.topbar .navbar-center {
+    justify-self: center !important;
+    text-align: center !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    color: var(--text-primary) !important;
+    opacity: 0.6;
+}
+
+.topbar .navbar-right {
+    justify-self: end !important;
+    display: flex !important;
+    margin: 0 !important;
+}
+
+.topbar a {
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    transition: color 0.2s ease !important;
+}
+.topbar a:hover {
+    color: var(--primary-color) !important;
+    text-decoration: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   MAC-OS STYLE FLOATING NAVBAR / DOCK
+   -------------------------------------------------------------------------- */
+.navbar-default {
+    background: var(--glass-bg) !important;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-glass) !important;
+    box-shadow: var(--shadow-dock) !important;
+    border-radius: var(--radius-lg);
+    margin: 10px auto 50px auto !important;
+    max-width: 1300px !important;
+    padding: 14px 30px !important;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.navbar-default:hover {
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.08), 0 2px 5px rgba(0, 0, 0, 0.04) !important;
+    transform: translateY(-2px) !important;
+}
+
+.navbar-default .container {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+.navbar-header {
+    display: flex !important;
+    align-items: center !important;
+}
+
+.navbar-brand {
+    font-weight: 800 !important;
+    font-size: 26px !important;
+    color: var(--text-primary) !important;
+    letter-spacing: -0.8px !important;
+    margin-right: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+.navbar-brand::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 24px;
+    background: var(--primary-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(46, 91, 255, 0.4);
+}
+.navbar-brand:hover {
+    color: var(--primary-color) !important;
+}
+
+.navbar-collapse {
+    border: none !important;
+    box-shadow: none !important;
+    display: flex !important;
+    flex-grow: 1 !important;
+    justify-content: flex-end !important;
+    overflow: visible !important;
+}
+
+.navbar-nav {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    width: 100% !important;
+    margin: 0 !important;
+    overflow-x: auto !important;
+    scrollbar-width: none; /* Firefox */
+}
+.navbar-nav::-webkit-scrollbar { display: none; /* Chrome/Safari */ }
+
+/* Navigation Icons (Dock Icons) */
+.navbar-nav > li {
+    float: none !important;
+    flex-shrink: 0 !important;
+    margin: 0 2px !important;
+}
+
+.navbar-nav > li > a.menu-icon {
+    border: none !important;
+    border-radius: var(--radius-md) !important;
+    color: var(--text-muted) !important;
+    font-weight: 600 !important;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    padding: 8px 10px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    font-size: 11px !important;
+    letter-spacing: 0.2px !important;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.navbar-nav > li > a.menu-icon img {
+    opacity: 0.5 !important;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    filter: grayscale(100%) !important;
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+    object-fit: contain !important;
+    margin-bottom: 6px !important;
+}
+
+.navbar-nav > li.active > a.menu-icon,
+.navbar-nav > li > a.menu-icon:hover {
+    background-color: var(--surface-hover) !important;
+    color: var(--primary-color) !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.04) !important;
+    transform: translateY(-4px) !important;
+}
+
+.navbar-nav > li.active > a.menu-icon img,
+.navbar-nav > li > a.menu-icon:hover img {
+    opacity: 1 !important;
+    filter: invert(36%) sepia(43%) saturate(5436%) hue-rotate(222deg) brightness(101%) contrast(105%) drop-shadow(0 4px 8px rgba(46, 91, 255, 0.3)) !important;
+    transform: scale(1.15) !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   DASHBOARD GRID (home.php overhaul)
+   -------------------------------------------------------------------------- */
+#home_module_list {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 30px !important;
+    padding: 20px !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    flex: 1 1 100% !important;
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+    justify-content: center !important;
+}
+
+/* Staggered Floating Animation */
+@keyframes floatIn {
+    0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Dashboard Module Cards (Vertical Layout) */
+.module_item {
+    background: var(--surface-color) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: var(--radius-lg) !important;
+    padding: 30px 20px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 250px !important;
+    height: 200px !important;
+    box-shadow: var(--shadow-soft) !important;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    border: 1px solid var(--border-glass) !important;
+    text-decoration: none !important;
+    position: relative;
+    overflow: hidden;
+    animation: floatIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    text-align: center !important;
+}
+
+.module_item:nth-child(1) { animation-delay: 0.1s; }
+.module_item:nth-child(2) { animation-delay: 0.15s; }
+.module_item:nth-child(3) { animation-delay: 0.2s; }
+.module_item:nth-child(4) { animation-delay: 0.25s; }
+.module_item:nth-child(5) { animation-delay: 0.3s; }
+.module_item:nth-child(6) { animation-delay: 0.35s; }
+.module_item:nth-child(7) { animation-delay: 0.4s; }
+.module_item:nth-child(8) { animation-delay: 0.45s; }
+.module_item:nth-child(9) { animation-delay: 0.5s; }
+
+.module_item::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    background: radial-gradient(circle at top right, rgba(46, 91, 255, 0.08) 0%, rgba(46, 91, 255, 0) 60%);
+    z-index: 1;
+}
+
+.module_item:hover {
+    transform: translateY(-8px) scale(1.03) !important;
+    box-shadow: var(--shadow-lift) !important;
+    border-color: rgba(46, 91, 255, 0.2) !important;
+    background: #FFFFFF !important;
+    text-decoration: none !important;
+}
+.module_item:hover::after {
+    opacity: 1;
+}
+
+.module_item img {
+    height: 64px !important;
+    width: 64px !important;
+    margin: 0 0 16px 0 !important;
+    filter: invert(36%) sepia(43%) saturate(5436%) hue-rotate(222deg) brightness(101%) contrast(105%) opacity(0.8) !important;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease !important;
+    position: relative;
+    z-index: 2;
+}
+
+.module_item:hover img {
+    transform: scale(1.1) rotate(-4deg) !important;
+    filter: invert(36%) sepia(43%) saturate(5436%) hue-rotate(222deg) brightness(101%) contrast(105%) opacity(1) drop-shadow(0 10px 15px rgba(46, 91, 255, 0.25)) !important;
+}
+
+.module_item span.module-title {
+    font-size: 20px !important;
+    font-weight: 800 !important;
+    color: var(--text-primary) !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.4px !important;
+    position: relative;
+    z-index: 2;
+    transition: color 0.3s ease !important;
+    margin-bottom: 6px !important;
+}
+
+.module_item:hover span.module-title {
+    color: var(--primary-color) !important;
+}
+
+.module_item span.module-desc {
+    font-size: 13px !important;
+    color: var(--text-muted) !important;
+    display: block !important;
+    line-height: 1.4 !important;
+    font-weight: 500 !important;
+    position: relative;
+    z-index: 2;
+}
+
+
+/* --------------------------------------------------------------------------
+   UI ELEMENTS & CLEANUP
+   -------------------------------------------------------------------------- */
+#footer { display: none !important; }
+
+h3.text-center {
+    font-weight: 800 !important;
+    font-size: 36px !important;
+    letter-spacing: -1.5px !important;
+    margin-bottom: 40px !important;
+    color: var(--text-primary) !important;
+    animation: floatIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+/* Cards and Panels */
+.panel, .modal-content, .box {
+    background: var(--surface-color) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-soft) !important;
+    overflow: hidden;
+}
+
+.panel-heading, .modal-header {
+    background: transparent !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    padding: 20px 25px !important;
+    font-weight: 700 !important;
+    font-size: 18px !important;
+    color: var(--text-primary) !important;
+    letter-spacing: -0.3px !important;
+}
+
+/* Buttons */
+.btn {
+    border-radius: var(--radius-pill) !important;
+    font-weight: 600 !important;
+    padding: 10px 24px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border: none !important;
+    letter-spacing: 0.3px;
+}
+
+.btn-primary {
+    background: var(--primary-color) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 15px rgba(46, 91, 255, 0.2) !important;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover) !important;
+    box-shadow: var(--shadow-lift) !important;
+    transform: translateY(-2px);
+}
+
+.btn-default {
+    background: #EDF1F5 !important;
+    color: var(--text-primary) !important;
+}
+
+.btn-default:hover {
+    background: #E2E7ED !important;
+}
+
+.btn-danger {
+    background: #FF4D4F !important;
+    color: #fff !important;
+}
+
+.btn-danger:hover {
+    background: #FF7875 !important;
+    box-shadow: 0 4px 15px rgba(255, 77, 79, 0.3) !important;
+    transform: translateY(-2px);
+}
+
+/* Tables */
+.table {
+    border: none !important;
+    background: var(--surface-color);
+    border-radius: var(--radius-lg);
+}
+
+.table > thead > tr > th {
+    border-bottom: 2px solid var(--border-color) !important;
+    border-top: none !important;
+    color: var(--text-muted) !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    font-size: 12px !important;
+    letter-spacing: 0.5px !important;
+    padding: 15px !important;
+}
+
+.table > tbody > tr > td {
+    border-top: 1px solid var(--border-color) !important;
+    padding: 15px !important;
+    vertical-align: middle !important;
+    color: var(--text-primary) !important;
+    font-weight: 500 !important;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: rgba(0,0,0,0.01) !important;
+}
+
+.table-hover > tbody > tr:hover {
+    background-color: var(--surface-hover) !important;
+}
+
+/* Inputs & Form Controls */
+.form-control {
+    border-radius: var(--radius-md) !important;
+    border: 1px solid var(--border-color) !important;
+    background-color: #F8F9FA !important;
+    padding: 12px 15px !important;
+    height: auto !important;
+    color: var(--text-primary) !important;
+    font-weight: 500 !important;
+    box-shadow: none !important;
+    transition: all 0.2s ease !important;
+}
+
+.form-control:focus {
+    background-color: #FFFFFF !important;
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 4px rgba(46, 91, 255, 0.1) !important;
+}
+
+/* Base structural overrides to prevent layout breaks */
+.wrapper > .container {
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+}
+
+/* --------------------------------------------------------------------------
+   SALES REGISTER UI MODERNIZATION
+   -------------------------------------------------------------------------- */
+#register_wrapper #register_container, #register_wrapper #overall_sale {
+    border-radius: var(--radius-lg) !important;
+    background: var(--surface-color) !important;
+    box-shadow: var(--shadow-soft) !important;
+    border: 1px solid var(--border-glass) !important;
+    padding: 24px !important;
+    margin-bottom: 24px !important;
+    backdrop-filter: var(--glass-blur);
+    animation: floatIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+#register_wrapper .panel-heading {
+    padding: 0 0 20px 0 !important;
+    border-bottom: 2px dashed var(--border-color) !important;
+    margin-bottom: 20px !important;
+}
+
+#register_wrapper .table th {
+    background: transparent !important;
+    color: var(--text-muted) !important;
+    text-transform: uppercase;
+    font-size: 11px !important;
+    letter-spacing: 0.8px;
+    border-bottom: 2px solid var(--border-color) !important;
+    padding: 12px 10px !important;
+}
+
+#register_wrapper .table td {
+    padding: 16px 10px !important;
+    border-top: 1px solid var(--border-color) !important;
+}
+
+#register_wrapper .input-group .form-control {
+    border-radius: var(--radius-md) 0 0 var(--radius-md) !important;
+}
+#register_wrapper .input-group-addon {
+    border-radius: 0 var(--radius-md) var(--radius-md) 0 !important;
+    background: var(--bg-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Sales totals accent */
+#sale_amount_due {
+    background: linear-gradient(135deg, var(--primary-color), #00F0FF);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ---- Register page: undo global bloat ---- */
+/* Tables inside register should be compact (not 15px padding) */
+#register_wrapper .table > thead > tr > th,
+#register_wrapper .table > tbody > tr > td,
+#register th, #register td {
+    padding: 5px 5px !important;
+    font-size: 12px !important;
+}
+
+/* Prevent panel overflow:hidden clipping dropdowns */
+#mode_form.panel,
+#add_item_form.panel,
+#overall_sale.panel {
+    overflow: visible !important;
+}
