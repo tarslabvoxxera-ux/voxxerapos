@@ -165,15 +165,11 @@ jobs:
       - name: Build Windows App
         if: matrix.platform == 'win'
         working-directory: ./desktop
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run dist:win
 
       - name: Build macOS App
         if: matrix.platform == 'mac'
         working-directory: ./desktop
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run dist:mac
 
       # ── 9. Upload artifact ───────────────────
