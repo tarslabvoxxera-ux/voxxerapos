@@ -42,7 +42,6 @@
         { "target": "dmg", "arch": ["x64"] },
         { "target": "zip", "arch": ["x64"] }
       ],
-      "icon": "build/icon.icns",
       "darkModeSupport": true,
       "hardenedRuntime": false
     },
@@ -51,8 +50,7 @@
       "target": [
         { "target": "nsis",     "arch": ["x64"] },
         { "target": "portable", "arch": ["x64"] }
-      ],
-      "icon": "build/icon.ico"
+      ]
     },
 
     "nsis": {
@@ -63,9 +61,6 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Voxxera POS",
-      "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico",
-      "installerHeaderIcon": "build/icon.ico",
       "deleteAppDataOnUninstall": false,
       "runAfterFinish": true,
       "installerLanguages": ["en_US"],
