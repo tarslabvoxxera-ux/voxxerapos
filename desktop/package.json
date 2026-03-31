@@ -29,12 +29,6 @@
     "appId": "com.voxxerapos.desktop",
     "asar": true,
     "compression": "maximum",
-    "publish": [
-      {
-        "provider": "github",
-        "releaseType": "release"
-      }
-    ],
 
     "mac": {
       "category": "public.app-category.business",
