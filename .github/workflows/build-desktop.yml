@@ -27,9 +27,9 @@ jobs:
             artifact-name: Voxxera-POS-Windows
             artifact-glob: desktop/dist/*.exe
 
-          # macos-13 = Intel runner → produces x64 DMG
-          # x64 apps also run on Apple Silicon via Rosetta 2
-          - os: macos-13
+          # macos-latest = available on free tier (Apple Silicon M-series)
+          # x64 DMG also runs on Intel Macs; arm64 runs natively on Apple Silicon
+          - os: macos-latest
             platform: mac
             artifact-name: Voxxera-POS-Mac
             artifact-glob: desktop/dist/*.dmg
@@ -81,7 +81,9 @@ jobs:
       # ── 6. Install Electron deps ─────────────
       - name: Install Electron Dependencies
         working-directory: ./desktop
-        run: npm ci
+        # --ignore-scripts skips the postinstall electron-builder hook which
+        # requires native tooling only available after the full install
+        run: npm install --ignore-scripts
 
       # ── 7a. Portable PHP – Windows ───────────
       - name: Download Portable PHP (Windows)
