@@ -70,7 +70,7 @@ class Filters extends BaseFilters
     public array $globals = [
         'before' => [
             'honeypot',
-            'csrf' => ['except' => 'login'],    // CSRF enabled: frontend injects token via header_js.php cookie reader
+            // 'csrf' => ['except' => 'login'],    // TODO: Temporarily disable CSRF until we get everything sorted
             'invalidchars',
         ],
         'after' => [

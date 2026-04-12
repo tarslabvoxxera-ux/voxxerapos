@@ -4,7 +4,6 @@ namespace App\Config\Validation;
 
 use App\Models\Employee;
 use CodeIgniter\HTTP\IncomingRequest;
-use CodeIgniter\Throttle\Throttler;
 use Config\OSPOS;
 use Config\Services;
 
@@ -32,18 +31,6 @@ class OSPOSRules
         $employee = model(Employee::class);
         $this->request = Services::request();
         $this->config = config(OSPOS::class)->settings;
-
-        // --- Brute-Force Rate Limiting ---
-        // Allow max 5 login attempts per IP address per 60 seconds.
-        // Keyed on IP (not username) to block credential-stuffing without revealing valid usernames.
-        $throttler = Services::throttler();
-        $ip_key    = 'login_' . md5($this->request->getIPAddress());
-        if (!$throttler->check($ip_key, 5, MINUTE)) {
-            $remaining = $throttler->getTokentime();
-            $error = lang('Login.too_many_attempts', [$remaining]);
-
-            return false;
-        }
 
         // Installation Check
         if (!$this->installation_check()) {

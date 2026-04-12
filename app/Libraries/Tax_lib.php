@@ -92,9 +92,8 @@ class Tax_lib
         $taxes = [];
         $item_taxes = [];
 
-        // Charge sales tax if customer is not selected (walk-in) or customer is flagged as taxable
-        if ($customer_id == -1 || $customer_info->taxable) {    // TODO: Replace -1 with constant.
-            foreach ($cart as $line => $item) {
+        // Always apply taxes — customer taxable flag is not used in GST/Indian tax context
+        foreach ($cart as $line => $item) {
                 $taxed = false;
 
                 if (!$this->config['use_destination_based_tax']) {
@@ -161,7 +160,6 @@ class Tax_lib
                 }
             }
             $this->round_taxes($taxes);
-        }
 
         $tax_details = [];
         $tax_details[0] = $taxes;

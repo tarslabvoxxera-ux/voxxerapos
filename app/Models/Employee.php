@@ -371,39 +371,17 @@ class Employee extends Person
         if ($query->getNumRows() === 1) {
             $row = $query->getRow();
 
-            // Locked/expired account (hash_version '0' set by security migration)
-            // Admin must reset this password before the account can log in.
-            if ($row->hash_version === '0') {
-                log_message('notice', "[SECURITY] Login rejected for employee ID {$row->person_id}: account password is expired and requires a reset.");
-                return false;
-            }
-
-            // Legacy MD5 hash — upgrade to bcrypt on first login.
-            // Session is only set AFTER the DB update succeeds to prevent partial login on DB failure.
+            // Compare passwords depending on the hash version
             if ($row->hash_version === '1' && $row->password === md5($password)) {
-                $password_hash = password_hash($password, PASSWORD_DEFAULT);
                 $builder->where('person_id', $row->person_id);
-                $upgraded = $builder->update(['hash_version' => 2, 'password' => $password_hash]);
-
-                if ($upgraded) {
-                    // Audit: track which accounts still had legacy MD5 hashes at login time
-                    log_message('notice', "[SECURITY] Upgraded legacy MD5 password to bcrypt for employee ID {$row->person_id} (username: {$username}).");
-                    $this->session->set('person_id', $row->person_id);
-                    return true;
-                }
-
-                return false;   // DB update failed — reject login
-            }
-
-            // Current bcrypt hash
-            if ($row->hash_version === '2' && password_verify($password, $row->password)) {
                 $this->session->set('person_id', $row->person_id);
-                return true;
-            }
+                $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
-            // Unknown hash version — reject rather than silently fall through
-            if (!in_array($row->hash_version, ['0', '1', '2'], true)) {
-                log_message('error', "[SECURITY] Employee ID {$row->person_id} has unknown hash_version '{$row->hash_version}'. Login rejected.");
+                return $builder->update(['hash_version' => 2, 'password' => $password_hash]);
+            } elseif ($row->hash_version === '2' && password_verify($password, $row->password)) {
+                $this->session->set('person_id', $row->person_id);
+
+                return true;
             }
         }
 

@@ -15,7 +15,6 @@
  * @var float $customer_discount
  * @var float $customer_total
  * @var string $customer_required
- * @var string $customer
  * @var float|int $item_count
  * @var float|int $total_units
  * @var float $subtotal
@@ -123,7 +122,7 @@ helper('url');
                     <label for="item" class="control-label"><?= lang(ucfirst($controller_name) . '.find_or_scan_item_or_receipt') ?></label>
                 </li>
                 <li class="pull-left">
-                    <?= form_input(['name' => 'item', 'id' => 'item', 'class' => 'form-control input-sm', 'size' => '50', 'tabindex' => ++$tabindex, 'placeholder' => lang(ucfirst($controller_name) . '.start_typing_item_name')]) ?>
+                    <?= form_input(['name' => 'item', 'id' => 'item', 'class' => 'form-control input-sm', 'size' => '50', 'tabindex' => ++$tabindex]) ?>
                     <span class="ui-helper-hidden-accessible" role="status"></span>
                 </li>
                 <li class="pull-right">
@@ -353,12 +352,18 @@ helper('url');
                     ['class' => 'btn btn-danger btn-sm', 'id' => 'remove_customer_button', 'title' => lang('Common.remove') . ' ' . lang('Customers.customer')]
                 )
                 ?>
+                <?= anchor(
+                    "reports/customer_history/$customer_id",
+                    '<span class="glyphicon glyphicon-time">&nbsp;</span> Purchase History',
+                    ['class' => 'btn btn-info btn-sm', 'target' => '_blank', 'title' => 'Customer Purchase History']
+                )
+                ?>
             <?php } else { ?>
                 <div class="form-group" id="select_customer">
                     <label id="customer_label" for="customer" class="control-label" style="margin-bottom: 1em; margin-top: -1em;">
                         <?= lang(ucfirst($controller_name) . '.select_customer') . esc(" $customer_required") ?>
                     </label>
-                    <?= form_input(['name' => 'customer', 'id' => 'customer', 'class' => 'form-control input-sm', 'placeholder' => lang(ucfirst($controller_name) . '.start_typing_customer_name')]) ?>
+                    <?= form_input(['name' => 'customer', 'id' => 'customer', 'class' => 'form-control input-sm', 'value' => lang(ucfirst($controller_name) . '.start_typing_customer_name')]) ?>
 
                     <button class="btn btn-info btn-sm modal-dlg" data-btn-submit="<?= lang('Common.submit') ?>" data-href="<?= "customers/view" ?>" title="<?= lang(ucfirst($controller_name) . ".new_customer") ?>">
                         <span class="glyphicon glyphicon-user">&nbsp;</span><?= lang(ucfirst($controller_name) . ".new_customer") ?>
@@ -383,50 +388,6 @@ helper('url');
                 <tr>
                     <th style="width: 55%;"><?= (float)$tax['tax_rate'] . '% ' . $tax['tax_group'] ?></th>
                     <th style="width: 45%; text-align: right;"><?= to_currency_tax($tax['sale_tax_amount']) ?></th>
-                </tr>
-                <?php
-                    $gst_half_rate  = round((float)$tax['tax_rate'] / 2, 4);
-                    $gst_half_amt   = round((float)$tax['sale_tax_amount'] / 2, 4);
-                    $cgst_half_amt  = (float)$tax['sale_tax_amount'] - $gst_half_amt;
-                    $safe_idx       = esc($tax_group_index);
-                ?>
-                <tr id="gst_row_<?= $safe_idx ?>">
-                    <th style="width: 55%; font-size: 90%; color: #555;">
-                        CGST (<?= $gst_half_rate ?>%)
-                    </th>
-                    <th style="width: 45%; text-align: right;">
-                        <span class="input-group input-group-sm" style="justify-content:flex-end;">
-                            <?= form_input([
-                                'type'        => 'number',
-                                'step'        => '0.0001',
-                                'id'          => 'cgst_amt_' . $safe_idx,
-                                'name'        => 'cgst_amt_' . $safe_idx,
-                                'class'       => 'form-control input-sm gst-input cgst-input',
-                                'value'       => $cgst_half_amt,
-                                'data-group'  => $safe_idx,
-                                'style'       => 'width:90px; display:inline-block; text-align:right;',
-                            ]) ?>
-                        </span>
-                    </th>
-                </tr>
-                <tr id="sgst_row_<?= $safe_idx ?>">
-                    <th style="width: 55%; font-size: 90%; color: #555;">
-                        SGST (<?= $gst_half_rate ?>%)
-                    </th>
-                    <th style="width: 45%; text-align: right;">
-                        <span class="input-group input-group-sm" style="justify-content:flex-end;">
-                            <?= form_input([
-                                'type'        => 'number',
-                                'step'        => '0.0001',
-                                'id'          => 'sgst_amt_' . $safe_idx,
-                                'name'        => 'sgst_amt_' . $safe_idx,
-                                'class'       => 'form-control input-sm gst-input sgst-input',
-                                'value'       => $gst_half_amt,
-                                'data-group'  => $safe_idx,
-                                'style'       => 'width:90px; display:inline-block; text-align:right;',
-                            ]) ?>
-                        </span>
-                    </th>
                 </tr>
             <?php } ?>
             <tr>
@@ -497,26 +458,49 @@ helper('url');
                                     <?= form_dropdown('payment_type', $payment_options,  $selected_payment_type, ['id' => 'payment_types', 'class' => 'selectpicker show-menu-arrow', 'data-style' => 'btn-default btn-sm', 'data-width' => 'fit']) ?>
                                 </td>
                             </tr>
-                            <tr id="single_amount_row">
+                            <tr>
                                 <td><span id="amount_tendered_label"><?= lang(ucfirst($controller_name) . '.amount_tendered') ?></span></td>
                                 <td>
                                     <?= form_input(['name' => 'amount_tendered', 'id' => 'amount_tendered', 'class' => 'form-control input-sm non-giftcard-input', 'value' => to_currency_no_money($amount_due), 'size' => '5', 'tabindex' => ++$tabindex, 'onClick' => 'this.select();']) ?>
                                     <?= form_input(['name' => 'amount_tendered', 'id' => 'amount_tendered', 'class' => 'form-control input-sm giftcard-input', 'disabled' => true, 'value' => to_currency_no_money($amount_due), 'size' => '5', 'tabindex' => ++$tabindex]) ?>
                                 </td>
                             </tr>
-                            <tr id="split_cash_row" style="display:none;">
-                                <td><label for="split_cash_amount">💵 <?= lang(ucfirst($controller_name) . '.split_cash_amount') ?></label></td>
-                                <td><?= form_input(['name' => 'split_cash_amount', 'id' => 'split_cash_amount', 'class' => 'form-control input-sm', 'value' => '0', 'size' => '5', 'onClick' => 'this.select();']) ?></td>
-                            </tr>
-                            <tr id="split_upi_row" style="display:none;">
-                                <td><label for="split_upi_amount">📱 <?= lang(ucfirst($controller_name) . '.split_upi_amount') ?></label></td>
-                                <td><?= form_input(['name' => 'split_upi_amount', 'id' => 'split_upi_amount', 'class' => 'form-control input-sm', 'value' => '0', 'size' => '5', 'onClick' => 'this.select();']) ?></td>
-                            </tr>
                         </table>
                     <?= form_close() ?>
 
-                    <div class="btn btn-sm btn-success pull-right" id="add_payment_button" tabindex="<?= ++$tabindex ?>">
-                        <span class="glyphicon glyphicon-credit-card">&nbsp;</span><?= lang(ucfirst($controller_name) . '.add_payment') ?>
+                    <div style="display: flex; justify-content: flex-end; gap: 5px;">
+                        <div class="btn btn-sm btn-info" id="split_payment_button" tabindex="<?= ++$tabindex ?>">
+                            <span class="glyphicon glyphicon-tasks">&nbsp;</span>Split Cash/UPI
+                        </div>
+                        <div class="btn btn-sm btn-success" id="add_payment_button" tabindex="<?= ++$tabindex ?>">
+                            <span class="glyphicon glyphicon-credit-card">&nbsp;</span><?= lang(ucfirst($controller_name) . '.add_payment') ?>
+                        </div>
+                    </div>
+                    <div class="clearfix"></div>
+
+                    <!-- Split Payment Form Hidden -->
+                    <div id="split_payment_form_container" style="display:none; margin-top: 10px; border: 1px solid #ccc; padding: 10px; border-radius: 4px; background: #f9f9f9;">
+                        <?= form_open("$controller_name/add_split_payment", ['id' => 'split_payment_form', 'class' => 'form-horizontal']) ?>
+                            <table class="sales_table_100">
+                                <tr>
+                                    <td style="width: 40%;"><strong><?= lang('Sales.upi') ?> Amount</strong></td>
+                                    <td>
+                                        <?= form_input(['name' => 'upi_amount', 'id' => 'split_upi_amount', 'class' => 'form-control input-sm', 'value' => to_currency_no_money($amount_due), 'size' => '5']) ?>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong><?= lang('Sales.cash') ?> Amount</strong></td>
+                                    <td>
+                                        <?= form_input(['name' => 'cash_amount', 'id' => 'split_cash_amount', 'class' => 'form-control input-sm disabled', 'readonly' => 'readonly', 'value' => '0', 'size' => '5']) ?>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2" style="text-align: right; padding-top: 10px;">
+                                        <div class="btn btn-sm btn-success" id="submit_split_button"><span class="glyphicon glyphicon-ok">&nbsp;</span>Apply Split</div>
+                                    </td>
+                                </tr>
+                            </table>
+                        <?= form_close() ?>
                     </div>
                 <?php } ?>
 
@@ -623,31 +607,6 @@ helper('url');
             window.location.href = "<?= site_url('sales'); ?>";
         };
 
-        // ── GST / CGST editable split ──────────────────────────────────────
-        // When user edits CGST, auto-update the SGST to keep them summing to total
-        $(document).on('change', '.cgst-input', function() {
-            var group     = $(this).data('group');
-            var cgstVal   = parseFloat($(this).val()) || 0;
-            var $sgst = $('#sgst_amt_' + group);
-            $.post("<?= site_url('sales/setGstOverride'); ?>", {
-                'group'    : group,
-                'cgst_amt' : cgstVal,
-                'sgst_amt' : parseFloat($sgst.val()) || 0
-            }, redirect);
-        });
-
-        $(document).on('change', '.sgst-input', function() {
-            var group    = $(this).data('group');
-            var sgstVal  = parseFloat($(this).val()) || 0;
-            var $cgst    = $('#cgst_amt_' + group);
-            $.post("<?= site_url('sales/setGstOverride'); ?>", {
-                'group'    : group,
-                'cgst_amt' : parseFloat($cgst.val()) || 0,
-                'sgst_amt' : sgstVal
-            }, redirect);
-        });
-        // ──────────────────────────────────────────────────────────────────
-
         $("#remove_customer_button").click(function() {
             $.post("<?= site_url('sales/removeCustomer'); ?>", redirect);
         });
@@ -706,6 +665,10 @@ helper('url');
 
         $('#item').focus();
 
+        $('#item').blur(function() {
+            $(this).val("<?= lang(ucfirst($controller_name) . '.start_typing_item_name') ?>");
+        });
+
         $('#item').autocomplete({
             source: "<?= esc("$controller_name/itemSearch") ?>",
             minChars: 0,
@@ -725,8 +688,18 @@ helper('url');
             }
         });
 
-        $('#item, #customer').dblclick(function(event) {
+        var clear_fields = function() {
+            if ($(this).val().match("<?= lang(ucfirst($controller_name) . '.start_typing_item_name') . '|' . lang(ucfirst($controller_name) . '.start_typing_customer_name') ?>")) {
+                $(this).val('');
+            }
+        };
+
+        $('#item, #customer').click(clear_fields).dblclick(function(event) {
             $(this).autocomplete('search');
+        });
+
+        $('#customer').blur(function() {
+            $(this).val("<?= lang(ucfirst($controller_name) . '.start_typing_customer_name') ?>");
         });
 
         $('#customer').autocomplete({
@@ -831,12 +804,6 @@ helper('url');
             }
         });
 
-        $('#split_cash_amount, #split_upi_amount').keypress(function(event) {
-            if (event.which == 13) {
-                $('#add_payment_form').submit();
-            }
-        });
-
         $('#finish_sale_button').keypress(function(event) {
             if (event.which == 13) {
                 $('#finish_sale_form').submit();
@@ -878,6 +845,25 @@ helper('url');
             $('#cart_' + $(this).attr('data-line')).append($(input));
             $('#cart_' + $(this).attr('data-line')).submit();
         });
+
+        // Split Payment UI Logic
+        $('#split_payment_button').click(function() {
+            $('#split_payment_form_container').toggle();
+            $('#split_upi_amount').focus().select();
+        });
+
+        $('#split_upi_amount').on('keyup change', function() {
+            var amountDue = <?= $amount_due ?>;
+            var upiAmount = parseFloat($(this).val()) || 0;
+            var cashAmount = amountDue - upiAmount;
+            
+            if (cashAmount < 0) cashAmount = 0;
+            $('#split_cash_amount').val(cashAmount.toFixed(2));
+        });
+
+        $('#submit_split_button').click(function() {
+            $('#split_payment_form').submit();
+        });
     });
 
     function check_payment_type() {
@@ -898,27 +884,6 @@ helper('url');
             $("#amount_tendered:enabled").val("<?= to_currency_no_money($cash_amount_due) ?>");
             $(".giftcard-input").attr('disabled', true);
             $(".non-giftcard-input").attr('disabled', false);
-        } else if ($("#payment_types").val() == "<?= lang(ucfirst($controller_name) . '.half_cash_upi') ?>") {
-            $("#sale_total").html("<?= to_currency($non_cash_total) ?>");
-            $("#sale_amount_due").html("<?= to_currency($amount_due) ?>");
-            $("#amount_tendered_label").html("<?= lang(ucfirst($controller_name) . '.amount_tendered') ?>");
-            $("#amount_tendered:enabled").val("<?= to_currency_no_money($amount_due) ?>");
-            $(".giftcard-input").attr('disabled', true);
-            $(".non-giftcard-input").attr('disabled', false);
-            $("#split_cash_row, #split_upi_row").hide();
-            $("#single_amount_row").show();
-        } else if ($("#payment_types").val() == "<?= lang(ucfirst($controller_name) . '.split_payment') ?>") {
-            $("#sale_total").html("<?= to_currency($non_cash_total) ?>");
-            $("#sale_amount_due").html("<?= to_currency($amount_due) ?>");
-            // Hide the standard single amount row, show the split rows
-            $("#single_amount_row").hide();
-            $("#split_cash_row, #split_upi_row").show();
-            $(".giftcard-input").attr('disabled', true);
-            $(".non-giftcard-input").attr('disabled', true);
-            // Auto-distribute: cash = 0, UPI = full amount due
-            var amtDue = "<?= to_currency_no_money($amount_due) ?>";
-            $("#split_cash_amount").val(amtDue).focus().select();
-            $("#split_upi_amount").val('0');
         } else {
             $("#sale_total").html("<?= to_currency($non_cash_total) ?>");
             $("#sale_amount_due").html("<?= to_currency($amount_due) ?>");
@@ -926,8 +891,6 @@ helper('url');
             $("#amount_tendered:enabled").val("<?= to_currency_no_money($amount_due) ?>");
             $(".giftcard-input").attr('disabled', true);
             $(".non-giftcard-input").attr('disabled', false);
-            $("#split_cash_row, #split_upi_row").hide();
-            $("#single_amount_row").show();
         }
     }
 

@@ -226,22 +226,12 @@ helper('number');
         }
         
         .terms {
-            margin-top: 8px;
+            margin-top: 12px;
             border-top: 2px solid #000;
-            padding-top: 6px;
+            padding-top: 8px;
             font-size: 10px;
+            white-space: pre-line;
             font-weight: 600;
-            line-height: 1.4;
-        }
-        .terms ul {
-            margin: 4px 0 0 0;
-            padding: 0 0 0 15px;
-            list-style-type: disc;
-        }
-        .terms li {
-            margin: 2px 0;
-            padding: 0;
-            line-height: 1.3;
         }
         
         .terms-title {
@@ -403,22 +393,7 @@ if (!empty($taxes)) {
 <?php if (!empty($config['return_policy'])): ?>
 <div class="terms">
     <div class="terms-title">Terms & Conditions:</div>
-    <?php
-    // Split by actual newlines or literal \n strings in the database
-    $policy = trim($config['return_policy']);
-    $policy = str_replace(['\r\n', '\r', '\n', "\\n"], "\n", $policy);
-    $policy = preg_replace("/\n{2,}/", "\n", $policy);
-    $lines = explode("\n", $policy);
-
-    echo '<ul>';
-    foreach ($lines as $line) {
-        $clean_line = trim($line);
-        if (!empty($clean_line)) {
-            echo '<li>' . esc($clean_line) . '</li>';
-        }
-    }
-    echo '</ul>';
-    ?>
+    <?= nl2br(esc($config['return_policy'])) ?>
 </div>
 <?php endif; ?>
 

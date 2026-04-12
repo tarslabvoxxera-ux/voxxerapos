@@ -88,7 +88,8 @@ $routes->post('sales/set_invoice_number', 'Sales::postSetInvoiceNumber');
 $routes->post('sales/setInvoiceNumber', 'Sales::postSetInvoiceNumber');
 $routes->add('sales/set_invoice_number', 'Sales::postSetInvoiceNumber');
 $routes->add('sales/setInvoiceNumber', 'Sales::postSetInvoiceNumber');
-// Note: postSetPaymentType routes have been removed — confirmed dead code (never called from any view or JS).
+$routes->post('sales/set_payment_type', 'Sales::postSetPaymentType');
+$routes->post('sales/setPaymentType', 'Sales::postSetPaymentType');
 $routes->post('sales/set_print_after_sale', 'Sales::postSetPrintAfterSale');
 $routes->post('sales/setPrintAfterSale', 'Sales::postSetPrintAfterSale');
 $routes->add('sales/set_print_after_sale', 'Sales::postSetPrintAfterSale');
@@ -103,6 +104,8 @@ $routes->add('sales/setEmailReceipt', 'Sales::postSetEmailReceipt');
 // Payments
 $routes->post('sales/add_payment', 'Sales::postAddPayment');
 $routes->post('sales/addPayment', 'Sales::postAddPayment');
+$routes->post('sales/add_split_payment', 'Sales::postAddSplitPayment');
+$routes->post('sales/addSplitPayment', 'Sales::postAddSplitPayment');
 $routes->get('sales/delete_payment/(:any)', 'Sales::getDeletePayment/$1');
 $routes->get('sales/deletePayment/(:any)', 'Sales::getDeletePayment/$1');
 

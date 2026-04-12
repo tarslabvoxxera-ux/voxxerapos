@@ -66,6 +66,7 @@ function sales_headers(): array
         ['sale_id'         => lang('Common.id')],
         ['sale_time'       => lang('Sales.sale_time')],
         ['customer_name'   => lang('Customers.customer')],
+        ['tax'             => lang('Sales.tax')],
         ['amount_due'      => lang('Sales.amount_due')],
         ['amount_tendered' => lang('Sales.amount_tendered')],
         ['change_due'      => lang('Sales.change_due')],
@@ -103,6 +104,7 @@ function get_sale_data_row(object $sale): array
         'sale_id'         => $sale->sale_id,
         'sale_time'       => to_datetime(strtotime($sale->sale_time)),
         'customer_name'   => $sale->customer_name,
+        'tax'             => to_currency($sale->tax),
         'amount_due'      => to_currency($sale->amount_due),
         'amount_tendered' => to_currency($sale->amount_tendered),
         'change_due'      => to_currency($sale->change_due),
@@ -150,15 +152,19 @@ function get_sale_data_last_row(ResultInterface $sales): array
     $sum_amount_tendered = 0;
     $sum_change_due = 0;
 
+    $sum_tax = 0;
+
     foreach ($sales->getResult() as $key => $sale) {
         $sum_amount_due += $sale->amount_due;
         $sum_amount_tendered += $sale->amount_tendered;
         $sum_change_due += $sale->change_due;
+        $sum_tax += $sale->tax;
     }
 
     return [
         'sale_id'         => '-',
         'sale_time'       => lang('Sales.total'),
+        'tax'             => to_currency($sum_tax),
         'amount_due'      => to_currency($sum_amount_due),
         'amount_tendered' => to_currency($sum_amount_tendered),
         'change_due'      => to_currency($sum_change_due)
@@ -389,17 +395,27 @@ function get_supplier_data_row(object $supplier): array
 
 function item_headers(): array
 {
-    return [
+    $config = config(OSPOS::class)->settings;
+
+    $headers = [
         ['items.item_id' => lang('Common.id')],
         ['item_number'   => lang('Items.item_number')],
         ['name'          => lang('Items.name')],
         ['category'      => lang('Items.category')],
+    ];
+
+    if ($config['include_hsn'] === '1') {
+        $headers[] = ['hsn_code' => lang('Items.hsn_code')];
+    }
+
+    $headers = array_merge($headers, [
         ['company_name'  => lang('Suppliers.company_name')],
         ['cost_price'    => lang('Items.cost_price')],
         ['unit_price'    => lang('Items.unit_price')],
-        ['hsn_code'      => lang('Items.hsn_code')],
         ['quantity'      => lang('Items.quantity')]
-    ];
+    ]);
+
+    return $headers;
 }
 
 /**
@@ -486,14 +502,20 @@ function get_item_data_row(object $item): array
         'item_number'   => $item->item_number,
         'name'          => $item->name,
         'category'      => $item->category,
+    ];
+
+    if ($config['include_hsn'] === '1') {
+        $columns['hsn_code'] = $item->hsn_code ?? '';
+    }
+
+    $columns = array_merge($columns, [
         'company_name'  => $item->company_name,    // TODO: This isn't in the items table. Should this be here?
         'cost_price'    => to_currency($item->cost_price),
         'unit_price'    => to_currency($item->unit_price),
-        'hsn_code'      => $item->hsn_code ?? '',
         'quantity'      => to_quantity_decimals($item->quantity),
         'tax_percents'  => !$tax_percents ? '-' : $tax_percents,
         'item_pic'      => $image
-    ];
+    ]);
 
     $icons = [
         'inventory' => anchor(

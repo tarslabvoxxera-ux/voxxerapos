@@ -161,14 +161,12 @@ class Employees extends Persons
         }
 
         if ($this->employee->save_employee($person_data, $employee_data, $grants_array, $employee_id)) {
-            // New employee — save_employee() populates $employee_data['person_id'] and $person_data['person_id']
-            // via pass-by-reference inside its body, so we read the updated value after the call.
+            // New employee
             if ($employee_id == NEW_ENTRY) {
-                $new_id = $employee_data['person_id'] ?? ($person_data['person_id'] ?? NEW_ENTRY);
                 echo json_encode([
                     'success' => true,
                     'message' => lang('Employees.successful_adding') . ' ' . $first_name . ' ' . $last_name,
-                    'id'      => $new_id
+                    'id'      => $employee_data['person_id']
                 ]);
             } else { // Existing employee
                 echo json_encode([
@@ -191,11 +189,6 @@ class Employees extends Persons
      */
     public function postDelete(): void
     {
-        if ($this->request->getPost('double_confirm') !== 'confirmed') {
-            echo json_encode(['success' => false, 'message' => 'Double confirmation required.']);
-            return;
-        }
-
         $employees_to_delete = $this->request->getPost('ids', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         if ($this->employee->delete_list($employees_to_delete)) {    // TODO: this is passing a string, but delete_list expects an array

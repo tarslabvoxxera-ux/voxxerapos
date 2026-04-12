@@ -86,7 +86,3 @@ auth.json
 /app/Database/database.sql
 /writable/cache/settings
 /.env.bak
-*.sql
-*.sqlite
-desktop/node_modules/
-desktop/dist/

@@ -176,13 +176,7 @@ class Suppliers extends Persons
      */
     public function postDelete(): void
     {
-        if ($this->request->getPost('double_confirm') !== 'confirmed') {
-            echo json_encode(['success' => false, 'message' => 'Double confirmation required.']);
-            return;
-        }
-
-        // Retrieve the array of supplier IDs and sanitize each element as an integer
-        $suppliers_to_delete = array_map('intval', (array) $this->request->getPost('ids'));
+        $suppliers_to_delete = $this->request->getPost('ids', FILTER_SANITIZE_NUMBER_INT);
 
         if ($this->supplier->delete_list($suppliers_to_delete)) {
             echo json_encode([

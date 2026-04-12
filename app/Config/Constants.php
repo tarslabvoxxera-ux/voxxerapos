@@ -161,7 +161,6 @@ const CASH_MODE_FALSE = 0;
  */
 const GOODS_SUPPLIER = 0;
 const COST_SUPPLIER = 1;
-const NO_SUPPLIER = -1;    // Sentinel value meaning no supplier is assigned
 
 /**
  * Locale Related Constants

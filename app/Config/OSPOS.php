@@ -29,13 +29,6 @@ class OSPOS extends BaseConfig
      */
     public function set_settings(): void
     {
-        // Try session first (fastest, saves file reads if cache is file-based)
-        $session = session();
-        if ($session->has('ospos_config_settings')) {
-            $this->settings = $session->get('ospos_config_settings');
-            return;
-        }
-
         $cache = $this->cache->get('settings');
 
         if ($cache) {
@@ -47,8 +40,6 @@ class OSPOS extends BaseConfig
             }
             $this->cache->save('settings', encode_array($this->settings));
         }
-
-        $session->set('ospos_config_settings', $this->settings);
     }
 
     /**
@@ -57,7 +48,6 @@ class OSPOS extends BaseConfig
     public function update_settings(): void
     {
         $this->cache->delete('settings');
-        session()->remove('ospos_config_settings');
         $this->set_settings();
     }
 }

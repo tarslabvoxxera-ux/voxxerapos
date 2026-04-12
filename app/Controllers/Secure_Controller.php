@@ -100,14 +100,14 @@ class Secure_Controller extends BaseController
     }
 
     /**
-     * @param string $key
-     * @return mixed|null
+     * @param $key
+     * @return mixed|void
      */
-    public function getConfig(string $key): mixed
+    public function getConfig($key)
     {
-        $config = config(OSPOS::class)->settings;
-
-        return $config[$key] ?? null;
+        if (isset($config[$key])) {
+            return $config[$key];
+        }
     }
 
     /**

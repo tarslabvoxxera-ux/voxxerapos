@@ -336,7 +336,9 @@ class Items extends Secure_Controller
         $data['suppliers'] = $suppliers;
         $data['selected_supplier'] = $item_info->supplier_id;
 
-        $data['hsn_code'] = $item_info->hsn_code ?? '';
+        $data['hsn_code'] = $data['include_hsn']
+            ? $item_info->hsn_code
+            : '';
 
         if ($use_destination_based_tax) {
             $data['use_destination_based_tax'] = true;
@@ -907,11 +909,6 @@ class Items extends Secure_Controller
      */
     public function postDelete(): void
     {
-        if ($this->request->getPost('double_confirm') !== 'confirmed') {
-            echo json_encode(['success' => false, 'message' => 'Double confirmation required.']);
-            return;
-        }
-
         $items_to_delete = $this->request->getPost('ids');
 
         // Check if user is admin (person_id = 1)
@@ -1026,8 +1023,8 @@ class Items extends Secure_Controller
                             if (empty($category)) {
                                 $category = !empty($item_name) ? $item_name : 'General';
                             }
-                            $cost_price = preg_replace('/[^0-9.]/', '', $normalized_row['COST PRICE'] ?? $normalized_row['COSTPRICE'] ?? $normalized_row['COST_PRICE'] ?? '0');
-                            $unit_price = preg_replace('/[^0-9.]/', '', $normalized_row['RETAIL PRICE'] ?? $normalized_row['RETAILPRICE'] ?? $normalized_row['RETAIL_PRICE'] ?? '0');
+                            $cost_price = str_replace(',', '', $normalized_row['COST PRICE'] ?? $normalized_row['COSTPRICE'] ?? $normalized_row['COST_PRICE'] ?? '0');
+                            $unit_price = str_replace(',', '', $normalized_row['RETAIL PRICE'] ?? $normalized_row['RETAILPRICE'] ?? $normalized_row['RETAIL_PRICE'] ?? '0');
                             // Default price if empty
                             if (empty($unit_price) || $unit_price === '0') {
                                 $unit_price = '0';
@@ -1153,7 +1150,7 @@ class Items extends Secure_Controller
                                 error_log("Row $failed_row FAILED validation: " . json_encode($item_data));
                             } else {
                                 // Get the last database error
-                                $db_error = $db->error();
+                                $db_error = $this->db->error();
                                 log_message('error', "Row $failed_row FAILED save: " . json_encode($item_data) . " DB Error: " . json_encode($db_error));
                                 error_log("Row $failed_row FAILED save: " . json_encode($item_data) . " DB Error: " . json_encode($db_error));
                             }
@@ -1197,8 +1194,7 @@ class Items extends Secure_Controller
     private function data_error_check(array $row, array $item_data, array $allowed_locations, array $definition_names, array $attribute_data): bool    // TODO: Long function and large number of parameters in the declaration... perhaps refactoring is needed
     {
         // Support both original format (Id) and normalized format (ID) and custom format (no Id)
-        // Priority to the item_id calculated by the caller
-        $item_id = $item_data['item_id'] ?? 0;
+        $item_id = $row['Id'] ?? $row['ID'] ?? $item_data['item_id'] ?? 0;
         $is_update = (bool)$item_id;
 
         // Check for empty required fields
@@ -1230,10 +1226,37 @@ class Items extends Secure_Controller
             'unit_price'    => $item_data['unit_price'] ?? 0,
             'reorder_level' => $item_data['reorder_level'] ?? 0,
         ];
+        
+        // Only check these fields if they exist in the CSV (original OSPOS format)
+        if (isset($row['Supplier ID'])) {
+            $check_for_numeric_values['supplier_id'] = $row['Supplier ID'];
+        }
+        if (isset($row['Tax 1 Percent'])) {
+            $check_for_numeric_values['Tax 1 Percent'] = $row['Tax 1 Percent'];
+        }
+        if (isset($row['Tax 2 Percent'])) {
+            $check_for_numeric_values['Tax 2 Percent'] = $row['Tax 2 Percent'];
+        }
+        // Check TRANSQTY for custom format - remove commas before numeric check
+        if (isset($row['TRANSQTY']) && $row['TRANSQTY'] !== '') {
+            $check_for_numeric_values['TRANSQTY'] = str_replace(',', '', $row['TRANSQTY']);
+        }
+        // Check COST PRICE and RETAIL PRICE for custom format - remove commas before numeric check
+        if (isset($row['COST PRICE']) && $row['COST PRICE'] !== '') {
+            $check_for_numeric_values['COST PRICE'] = str_replace(',', '', $row['COST PRICE']);
+        }
+        if (isset($row['RETAIL PRICE']) && $row['RETAIL PRICE'] !== '') {
+            $check_for_numeric_values['RETAIL PRICE'] = str_replace(',', '', $row['RETAIL PRICE']);
+        }
+
+        foreach ($allowed_locations as $location_name) {
+            if (isset($row["location_$location_name"])) {
+                $check_for_numeric_values["location_$location_name"] = $row["location_$location_name"];
+            }
+        }
 
         // Check for non-numeric values which require numeric
         foreach ($check_for_numeric_values as $key => $value) {
-            // Already cleaned by caller or regex
             if (!is_numeric($value) && !empty($value)) {
                 log_message('error', "non-numeric: '$value' for '$key' when numeric is required");
                 return true;

@@ -26,7 +26,37 @@
     },
     "scripts": {
         "build": "gulp default",
-        "gulp": "gulp"
+        "gulp": "gulp",
+        "desktop:start": "electron desktop/main.js",
+        "desktop:build": "electron-builder build"
+    },
+    "build": {
+        "appId": "com.voxxera.pos",
+        "productName": "Voxxera POS",
+        "directories": {
+            "output": "dist"
+        },
+        "files": [
+            "**/*",
+            "desktop/main.js",
+            "desktop/preload.js",
+            "desktop/bin/**/*",
+            "!dist",
+            "!.github",
+            "!tests"
+        ],
+        "mac": {
+            "target": [
+                "dmg",
+                "zip"
+            ],
+            "category": "public.app-category.business"
+        },
+        "win": {
+            "target": [
+                "nsis"
+            ]
+        }
     },
     "type": "module",
     "dependencies": {

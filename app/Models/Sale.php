@@ -653,10 +653,9 @@ class Sale extends Model
             $attribute->copy_attribute_links($item_data['item_id'], 'sale_id', $sale_id);
         }
 
-        if ($customer_id == NEW_ENTRY || $customer->taxable) {
-            $this->save_sales_tax($sale_id, $sales_taxes[0]);
-            $this->save_sales_items_taxes($sale_id, $sales_taxes[1]);
-        }
+        // Always save taxes for Indian localization (GST applies regardless of customer status)
+        $this->save_sales_tax($sale_id, $sales_taxes[0]);
+        $this->save_sales_items_taxes($sale_id, $sales_taxes[1]);
 
         if ($config['dinner_table_enable']) {
             $dinner_table = model(Dinner_table::class);
@@ -760,10 +759,9 @@ class Sale extends Model
     }
 
     /**
-     * Restores list of sales (reverts their status back to SUSPENDED).
-     * Note: $employee_id and $update_inventory are not applicable to restore — only deletion reverses inventory.
+     * Restores list of sales
      */
-    public function restore_list(array $sale_ids): bool
+    public function restore_list(array $sale_ids, int $employee_id, bool $update_inventory = true): bool    // TODO: $employee_id and $update_inventory are never used in the function.
     {
         foreach ($sale_ids as $sale_id) {
             $this->update_sale_status($sale_id, SUSPENDED);
@@ -1106,6 +1104,7 @@ class Sale extends Model
                     MAX(customer_p.first_name) AS customer_first_name,
                     MAX(customer_p.last_name) AS customer_last_name,
                     MAX(customer_p.email) AS customer_email,
+                    MAX(customer_p.phone_number) AS customer_phone,
                     MAX(customer_p.comments) AS customer_comments,
                     MAX(customer.company_name) AS customer_company_name,
                     MAX(sales.employee_id) AS employee_id,

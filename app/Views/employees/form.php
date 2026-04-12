@@ -111,12 +111,6 @@
         <div class="tab-pane" id="employee_permission_info">
             <fieldset>
                 <p><?= lang('Employees.permission_desc') ?></p>
-                <div class="form-group form-group-sm">
-                    <div class="col-xs-12">
-                        <button type="button" class="btn btn-default btn-xs" id="grant_all_btn"><?= lang('Employees.grant_all') ?></button>
-                        <button type="button" class="btn btn-default btn-xs" id="revoke_all_btn"><?= lang('Employees.revoke_all') ?></button>
-                    </div>
-                </div>
 
                 <ul id="permission_list">
                     <?php foreach ($all_modules as $module) { ?>
@@ -253,23 +247,5 @@
                 email: "<?= lang('Common.email_invalid_format') ?>"
             }
         }, form_support.error));
-
-        $('#grant_all_btn').click(function() {
-            $('#permission_list input[type="checkbox"]').prop('checked', true).trigger('change');
-        });
-
-        $('#revoke_all_btn').click(function() {
-            $('#permission_list input[type="checkbox"]').prop('checked', false).trigger('change');
-        });
-
-        $('#first_name, #last_name').on('keyup change', function() {
-            if ("<?= $employee_id ?>" == "-1" && $('#username').val() == '') {
-                var first_name = $('#first_name').val().toLowerCase().replace(/[^a-z0-9]/g, '');
-                var last_name = $('#last_name').val().toLowerCase().replace(/[^a-z0-9]/g, '');
-                if (first_name != '' && last_name != '') {
-                    $('#username').val(first_name + '.' + last_name);
-                }
-            }
-        });
     });
 </script>

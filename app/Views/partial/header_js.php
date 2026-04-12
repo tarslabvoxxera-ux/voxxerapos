@@ -88,43 +88,4 @@
         setup_csrf_token();
         submit.apply(this, arguments);
     };
-
-    // Data Safety: Double Confirmation Override
-    $(document).ready(function() {
-        if (window.table_support && window.table_support.do_action) {
-            var original_do_action = window.table_support.do_action;
-            window.table_support.do_action = function(url) {
-                var self = this;
-                if (url.indexOf('delete') !== -1) {
-                    dialog_support.confirm(<?= json_encode('Are you sure you want to delete the selected rows?') ?>, function() {
-                        // If first confirmation passes, show a second one for critical safety
-                        bootstrap_dialog.confirm({
-                            title: <?= json_encode('CRITICAL: Second Confirmation Required') ?>,
-                            message: <?= json_encode('This action is permanent and cannot be undone. Please confirm once more to proceed with data removal.') ?>,
-                            type: bootstrap_dialog.TYPE_DANGER,
-                            closable: true,
-                            draggable: true,
-                            btnOKClass: 'btn-danger',
-                            callback: function(result) {
-                                if (result) {
-                                    var postData = self.selected_ids();
-                                    postData['double_confirm'] = 'confirmed';
-                                    $.post(url, postData, function(response) {
-                                        if (response.success) {
-                                            $.notify({ message: response.message }, { type: 'success' });
-                                            self.refresh();
-                                        } else {
-                                            $.notify({ message: response.message }, { type: 'danger' });
-                                        }
-                                    }, 'json');
-                                }
-                            }
-                        });
-                    });
-                } else {
-                    original_do_action.apply(this, arguments);
-                }
-            };
-        }
-    });
 </script>

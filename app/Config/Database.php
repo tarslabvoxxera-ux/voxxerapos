@@ -26,11 +26,11 @@ class Database extends Config
      */
     public array $default = [
         'DSN'          => '',
-        'hostname'     => '',
-        'username'     => '',
-        'password'     => '',
-        'database'     => WRITEPATH . 'voxxera.sqlite',
-        'DBDriver'     => 'SQLite3',
+        'hostname'     => 'localhost',
+        'username'     => 'admin',
+        'password'     => 'pointofsale',
+        'database'     => 'ospos',
+        'DBDriver'     => 'MySQLi',
         'DBPrefix'     => 'ospos_',
         'pConnect'     => false,
         'DBDebug'      => (ENVIRONMENT !== 'production'),
@@ -56,11 +56,11 @@ class Database extends Config
      */
     public array $tests = [
         'DSN'          => '',
-        'hostname'     => '',
-        'username'     => '',
-        'password'     => '',
-        'database'     => WRITEPATH . 'voxxera.sqlite',
-        'DBDriver'     => 'SQLite3',
+        'hostname'     => 'localhost',
+        'username'     => 'admin',
+        'password'     => 'pointofsale',
+        'database'     => 'ospos',
+        'DBDriver'     => 'MySQLi',
         'DBPrefix'     => 'ospos_',
         'pConnect'     => false,
         'DBDebug'      => (ENVIRONMENT !== 'production'),
@@ -88,11 +88,11 @@ class Database extends Config
      */
     public $development = [
         'DSN'          => '',
-        'hostname'     => '',
-        'username'     => '',
-        'password'     => '',
-        'database'     => WRITEPATH . 'voxxera.sqlite',
-        'DBDriver'     => 'SQLite3',
+        'hostname'     => 'localhost',
+        'username'     => 'admin',
+        'password'     => 'pointofsale',
+        'database'     => 'ospos',
+        'DBDriver'     => 'MySQLi',
         'DBPrefix'     => 'ospos_',
         'pConnect'     => false,
         'DBDebug'      => (ENVIRONMENT !== 'production'),
@@ -129,7 +129,11 @@ class Database extends Config
                 break;
         }
 
-        // Environment variable overwrites are disabled since we enforce SQLite for Desktop POS
-        // foreach ([&$this->development, &$this->tests, &$this->default] as &$config) { ... }
+        foreach ([&$this->development, &$this->tests, &$this->default] as &$config) {
+            $config['hostname'] = !getenv('MYSQL_HOST_NAME') ? $config['hostname'] : getenv('MYSQL_HOST_NAME');
+            $config['username'] = !getenv('MYSQL_USERNAME') ? $config['username'] : getenv('MYSQL_USERNAME');
+            $config['password'] = !getenv('MYSQL_PASSWORD') ? $config['password'] : getenv('MYSQL_PASSWORD');
+            $config['database'] = !getenv('MYSQL_DB_NAME') ? $config['database'] : getenv('MYSQL_DB_NAME');
+        }
     }
 }

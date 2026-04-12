@@ -60,6 +60,19 @@ Besides the demo of the latest master, we also have a development server that bu
 
 The log in credentials are the same as the regular live demo.
 
+## 🖥️ Desktop Version (Offline & LAN)
+
+Voxxera now supports a standalone desktop version for Windows and macOS. This version allows you to run the POS offline and share it with other devices in the same local network.
+
+### ✨ Features
+- **One-click Launch**: Bundled PHP environment (no system installation required).
+- **Network Sharing**: Automatically detects your local IP and allows other devices on the same Wi-Fi/LAN to connect to your POS.
+- **Cross-Platform**: Available for Windows (.exe) and macOS (.dmg).
+
+### 🚀 How to Build & Use
+1. **Build locally**: Run `npm install` and then `npm run desktop:build`. Binaries will be in the `/dist` folder.
+2. **Download from GitHub**: Go to the **Actions** tab in your repository and look for "Desktop Release" to download the latest builds for Windows and Mac.
+3. **Connectivity**: When you run the app, a banner at the bottom will show your network address (e.g., `http://192.168.1.5:8080`). Other devices in your network can connect by visiting this URL.
 ## 💾 Installation
 
 Please **refrain from creating issues** about installation problems before having read the FAQ and going through existing GitHub issues. We have a build pipeline that checks the sanity of our latest repository commit, and in case the application itself is broken then our build will be as well.

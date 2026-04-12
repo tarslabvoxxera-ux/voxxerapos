@@ -60,6 +60,8 @@ return [
     "inventory_reports"                       => "Inventory Reports",
     "inventory_summary"                       => "Inventory Summary",
     "inventory_summary_report"                => "Inventory Summary Report",
+    "hsn_code"                                => "HSN Code",
+    "hsn_codes_summary_report"                => "HSN Codes Summary Report",
     "item"                                    => "Item",
     "item_count"                              => "Filter Item Count",
     "item_name"                               => "Item Name",

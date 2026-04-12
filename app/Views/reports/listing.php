@@ -43,6 +43,9 @@ if (isset($error)) {
                     }
                 }
                 ?>
+                <?php if (in_array('reports_sales', $permission_ids, true)) { ?>
+                    <a class="list-group-item" href="<?= site_url('reports/graphical_summary_hsn_codes') ?>"><span class="glyphicon glyphicon-barcode"></span> <?= lang('Reports.hsn_codes_summary_report') ?></a>
+                <?php } ?>
             </div>
         </div>
     </div>
@@ -62,6 +65,9 @@ if (isset($error)) {
                     }
                 }
                 ?>
+                <?php if (in_array('reports_sales', $permission_ids, true)) { ?>
+                    <a class="list-group-item" href="<?= site_url('reports/summary_hsn_codes') ?>"><?= lang('Reports.hsn_codes_summary_report') ?></a>
+                <?php } ?>
             </div>
         </div>
     </div>

@@ -35,7 +35,7 @@ class Receipt_pdf
      * Get the path for a receipt file
      * Organizes by Year/Month
      */
-    public function get_receipt_path(int $sale_id, ?string $date = null): string
+    public function get_receipt_path(int $sale_id, string $date = null): string
     {
         $date = $date ?? date('Y-m-d');
         $year = date('Y', strtotime($date));
@@ -437,7 +437,7 @@ class Receipt_pdf
     /**
      * Get all saved receipts
      */
-    public function get_all_receipts(?string $year = null, ?string $month = null): array
+    public function get_all_receipts(string $year = null, string $month = null): array
     {
         $receipts = [];
         $base_path = $this->receipts_path;

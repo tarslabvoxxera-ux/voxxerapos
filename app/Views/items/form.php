@@ -282,19 +282,21 @@
             </div>
         <?php endif; ?>
 
-        <div class="form-group form-group-sm">
-            <?= form_label(lang('Items.hsn_code'), 'hsn_code', ['class' => 'control-label col-xs-3']) ?>
-            <div class="col-xs-8">
-                <div class="input-group">
-                    <?= form_input([
-                        'name'  => 'hsn_code',
-                        'id'    => 'hsn_code',
-                        'class' => 'form-control input-sm',
-                        'value' => $hsn_code
-                    ]) ?>
+        <?php if ($include_hsn): ?>
+            <div class="form-group form-group-sm">
+                <?= form_label(lang('Items.hsn_code'), 'hsn_code', ['class' => 'control-label col-xs-3']) ?>
+                <div class="col-xs-8">
+                    <div class="input-group">
+                        <?= form_input([
+                            'name'  => 'hsn_code',
+                            'id'    => 'hsn_code',
+                            'class' => 'form-control input-sm',
+                            'value' => $hsn_code
+                        ]) ?>
+                    </div>
                 </div>
             </div>
-        </div>
+        <?php endif; ?>
 
         <?php foreach ($stock_locations as $key => $location_detail) { ?>
             <div class="form-group form-group-sm">

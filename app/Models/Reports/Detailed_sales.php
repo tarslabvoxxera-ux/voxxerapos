@@ -6,7 +6,8 @@ use App\Models\Sale;
 
 /**
  *
- * @property \App\Models\Sale $sale
+ *
+ * @property sale sale
  *
  */
 class Detailed_sales extends Report
@@ -168,18 +169,9 @@ class Detailed_sales extends Report
         $data['details'] = [];
         $data['rewards'] = [];
 
-        if (!empty($data['summary'])) {
-            $sale_ids = array_column($data['summary'], 'sale_id');
-            $id_to_key = [];
-            foreach ($data['summary'] as $key => $value) {
-                $data['details'][$key] = [];
-                $data['rewards'][$key] = [];
-                $id_to_key[$value['sale_id']] = $key;
-            }
-
+        foreach ($data['summary'] as $key => $value) {
             $builder = $this->db->table('sales_items_temp');
             $builder->select('
-                sales_items_temp.sale_id,
                 MAX(name) AS name,
                 MAX(category) AS category,
                 MAX(quantity_purchased) AS quantity_purchased,
@@ -204,25 +196,14 @@ class Detailed_sales extends Report
                 $builder->join('attribute_values', 'attribute_values.attribute_id = attribute_links.attribute_id', 'left');
             }
 
-            $builder->whereIn('sales_items_temp.sale_id', $sale_ids);
-            $builder->groupBy('sales_items_temp.sale_id, sales_items_temp.item_id');
-            
-            $all_details = $builder->get()->getResultArray();
-            foreach ($all_details as $detail) {
-                $key = $id_to_key[$detail['sale_id']];
-                $data['details'][$key][] = $detail;
-            }
+            $builder->groupBy('sales_items_temp.sale_id, sales_items_temp.item_id, sales_items_temp.sale_id');
+            $builder->where('sales_items_temp.sale_id', $value['sale_id']);
+            $data['details'][$key] = $builder->get()->getResultArray();
 
-            // Fetch rewards in bulk
+            $builder->select('used, earned');
             $builder = $this->db->table('sales_reward_points');
-            $builder->select('sale_id, used, earned');
-            $builder->whereIn('sale_id', $sale_ids);
-            
-            $all_rewards = $builder->get()->getResultArray();
-            foreach ($all_rewards as $reward) {
-                $key = $id_to_key[$reward['sale_id']];
-                $data['rewards'][$key][] = $reward;
-            }
+            $builder->where('sale_id', $value['sale_id']);
+            $data['rewards'][$key] = $builder->get()->getResultArray();
         }
 
         return $data;

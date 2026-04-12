@@ -3,6 +3,8 @@
 # Voxxera POS - Remote Access Setup
 # This script helps you expose your local Voxxera POS to the internet securely
 
+export PATH=$PATH:/opt/homebrew/bin
+
 echo "╔══════════════════════════════════════════════════════════╗"
 echo "║     Voxxera POS - Remote Access Setup                    ║"
 echo "╚══════════════════════════════════════════════════════════╝"
@@ -14,7 +16,7 @@ if docker ps | grep -q voxxera_pos_prod; then
     echo "✅ Voxxera POS is running!"
 else
     echo "❌ Voxxera POS is not running. Starting it..."
-    cd "/Users/iamsnh/Downloads/opensourcepos-master 12"
+    cd "$(dirname "$0")"
     docker-compose -f docker-compose.production.yml up -d
     sleep 10
 fi

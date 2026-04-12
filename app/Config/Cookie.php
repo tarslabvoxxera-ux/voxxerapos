@@ -63,7 +63,7 @@ class Cookie extends BaseConfig
      *
      * Cookie will only be accessible via HTTP(S) (no JavaScript).
      */
-    public bool $httponly = false;  // CSRF cookie must be JS-readable (cookie-based CSRF protection)
+    public bool $httponly = true;
 
     /**
      * --------------------------------------------------------------------------

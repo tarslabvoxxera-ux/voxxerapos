@@ -84,32 +84,30 @@ class Customers extends Persons
     public function getSearch(): void
     {
         $search = $this->request->getGet('search');
-        $limit  = $this->request->getGet('limit', FILTER_SANITIZE_NUMBER_INT);
+        $limit = $this->request->getGet('limit', FILTER_SANITIZE_NUMBER_INT);
         $offset = $this->request->getGet('offset', FILTER_SANITIZE_NUMBER_INT);
-        $sort   = $this->sanitizeSortColumn(customer_headers(), $this->request->getGet('sort', FILTER_SANITIZE_FULL_SPECIAL_CHARS), 'people.person_id');
-        $order  = $this->request->getGet('order', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $sort = $this->sanitizeSortColumn(customer_headers(), $this->request->getGet('sort', FILTER_SANITIZE_FULL_SPECIAL_CHARS), 'people.person_id');
+        $order = $this->request->getGet('order', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        $customers  = $this->customer->search($search, $limit, $offset, $sort, $order);
+        $customers = $this->customer->search($search, $limit, $offset, $sort, $order);
         $total_rows = $this->customer->get_found_rows($search);
-        $rows       = $customers->getResult();
-
-        // Collect all person IDs in one pass, then fetch all stats in a SINGLE bulk query.
-        // Previously: get_stats() fired 3 queries per customer (N+1). Now: 1 query total.
-        $customer_ids = array_map(static fn($p) => $p->person_id, $rows);
-        $stats_map    = $this->customer->get_stats_bulk($customer_ids);
-
-        // Default empty-stats object for customers with no completed sales
-        $empty_stats              = new stdClass();
-        $empty_stats->total       = 0;
-        $empty_stats->min         = 0;
-        $empty_stats->max         = 0;
-        $empty_stats->average     = 0;
-        $empty_stats->avg_discount = 0;
-        $empty_stats->quantity    = 0;
 
         $data_rows = [];
-        foreach ($rows as $person) {
-            $stats       = $stats_map[$person->person_id] ?? $empty_stats;
+
+        foreach ($customers->getResult() as $person) {
+            // Retrieve the total amount the customer spent so far together with min, max and average values
+            $stats = $this->customer->get_stats($person->person_id);    // TODO: duplicated... see above
+            if (empty($stats)) {
+                // Create object with empty properties.
+                $stats = new stdClass();
+                $stats->total = 0;
+                $stats->min = 0;
+                $stats->max = 0;
+                $stats->average = 0;
+                $stats->avg_discount = 0;
+                $stats->quantity = 0;
+            }
+
             $data_rows[] = get_customer_data_row($person, $stats);
         }
 
@@ -345,30 +343,21 @@ class Customers extends Persons
      */
     public function postDelete(): void
     {
-        if ($this->request->getPost('double_confirm') !== 'confirmed') {
-            echo json_encode(['success' => false, 'message' => 'Double confirmation required.']);
-            return;
-        }
-
-        $customers_to_delete = array_map('intval', (array) $this->request->getPost('ids'));
+        $customers_to_delete = $this->request->getPost('ids');
         $customers_info = $this->customer->get_multiple_info($customers_to_delete);
 
-        // Collect customer data before deletion so we can clean up Mailchimp afterwards
-        $emails_to_remove = [];
+        $count = 0;
+
         foreach ($customers_info->getResult() as $info) {
-            if (!empty($info->email)) {
-                $emails_to_remove[] = $info->email;
+            if ($this->customer->delete($info->person_id)) {
+                // remove customer from Mailchimp selected list
+                $this->mailchimp_lib->removeMember($this->_list_id, $info->email);
+
+                $count++;
             }
         }
 
-        // Perform all deletes in a single atomic operation via delete_list()
-        if ($this->customer->delete_list($customers_to_delete)) {
-            // All DB deletes succeeded — now clean up Mailchimp
-            foreach ($emails_to_remove as $email) {
-                $this->mailchimp_lib->removeMember($this->_list_id, $email);
-            }
-
-            $count = count($customers_to_delete);
+        if ($count == count($customers_to_delete)) {
             echo json_encode([
                 'success' => true,
                 'message' => lang('Customers.successful_deleted') . ' ' . $count . ' ' . lang('Customers.one_or_multiple')

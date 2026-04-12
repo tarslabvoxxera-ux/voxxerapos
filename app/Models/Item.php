@@ -11,8 +11,8 @@ use stdClass;
 /**
  * Item class
  *
- * @property \App\Models\Inventory $inventory
- * @property \App\Models\Item_quantity $item_quantity
+ * @property inventory inventory
+ * @property item_quantity item_quantity
  */
 class Item extends Model
 {
@@ -159,7 +159,6 @@ class Item extends Model
             $builder->select('MAX(items.is_serialized) AS is_serialized');
             $builder->select('MAX(items.pack_name) AS pack_name');
             $builder->select('MAX(items.tax_category_id) AS tax_category_id');
-            $builder->select('MAX(items.hsn_code) AS hsn_code');
             $builder->select('MAX(items.deleted) AS deleted');
 
             $builder->select('MAX(suppliers.person_id) AS person_id');

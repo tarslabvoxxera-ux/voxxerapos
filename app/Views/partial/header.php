@@ -16,6 +16,7 @@ $request = Services::request();
 
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <base href="<?= base_url() ?>">
     <title><?= esc($config['company']) . ' | ' . lang('Common.powered_by') . ' Voxxera POS ' . esc(config('App')->application_version) ?></title>
     <link rel="shortcut icon" type="image/x-icon" href="images/favicon.ico">
@@ -96,11 +97,6 @@ $request = Services::request();
         <!-- endinject -->
     <?php endif; ?>
 
-    <!-- PREMIUM LIGHT THEME CSS -->
-    <link rel="stylesheet" href="<?= base_url('css/voxxera_lumina.css?v=' . time()) ?>">
-    <!-- REGISTER LAYOUT CSS -->
-    <link rel="stylesheet" href="<?= base_url('css/register.css?v=' . time()) ?>">
-
     <?= view('partial/header_js') ?>
     <?= view('partial/lang_lines') ?>
 
@@ -149,8 +145,8 @@ $request = Services::request();
                         <?php foreach ($allowed_modules as $module): ?>
                             <li class="<?= $module->module_id == $request->getUri()->getSegment(1) ? 'active' : '' ?>">
                                 <a href="<?= base_url($module->module_id) ?>" title="<?= lang("Module.$module->module_id") ?>" class="menu-icon">
-                                    <img src="<?= base_url("images/menubar/$module->module_id.svg") ?>" style="border: none;" alt="Module Icon">
-                                    <span><?= lang('Module.' . $module->module_id) ?></span>
+                                    <img src="<?= base_url("images/menubar/$module->module_id.svg") ?>" style="border: none;" alt="Module Icon"><br>
+                                    <?= lang('Module.' . $module->module_id) ?>
                                 </a>
                             </li>
                         <?php endforeach; ?>

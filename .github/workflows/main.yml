@@ -19,9 +19,6 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   lint:
     name: PHP ${{ matrix.php-version }} Lint with PHP CS Fixer

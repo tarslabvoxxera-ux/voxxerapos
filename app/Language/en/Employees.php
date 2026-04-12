@@ -42,6 +42,4 @@ return [
     "username_duplicate"           => "Employee username is already in use. Please choose another one.",
     "username_minlength"           => "Username must be at least 5 characters in length.",
     "username_required"            => "Username is a required field.",
-    "grant_all"                    => "Grant All Permissions",
-    "revoke_all"                   => "Revoke All Permissions",
 ];

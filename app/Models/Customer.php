@@ -172,51 +172,6 @@ class Customer extends Person
     }
 
     /**
-     * Gets stats for a set of customer IDs in a single query — eliminates the N+1 problem
-     * in getSearch() where get_stats() fired 3 queries per customer.
-     *
-     * Returns an array keyed by customer person_id. Missing customers (no sales) are not included;
-     * the caller is responsible for providing a default empty-stats object.
-     *
-     * @param int[] $customer_ids
-     * @return array<int, object>  Keys are person_id integers.
-     */
-    public function get_stats_bulk(array $customer_ids): array
-    {
-        if (empty($customer_ids)) {
-            return [];
-        }
-
-        $totals_decimals   = totals_decimals();
-        $quantity_decimals = quantity_decimals();
-
-        // Single aggregated query: one pass over sales/payments/items for all customers.
-        // Mirrors get_stats() logic but groups by customer_id instead of running per-customer.
-        $builder = $this->db->table('sales');
-        $builder->select([
-            'sales.customer_id',
-            'SUM(sales_payments.payment_amount - sales_payments.cash_refund) AS total',
-            'MIN(sales_payments.payment_amount - sales_payments.cash_refund) AS min',
-            'MAX(sales_payments.payment_amount - sales_payments.cash_refund) AS max',
-            'AVG(sales_payments.payment_amount - sales_payments.cash_refund) AS average',
-            "ROUND(AVG(sales_items.discount), $totals_decimals) AS avg_discount",
-            "ROUND(SUM(sales_items.quantity_purchased), $quantity_decimals) AS quantity",
-        ]);
-        $builder->join('sales_payments', 'sales.sale_id = sales_payments.sale_id');
-        $builder->join('sales_items',    'sales.sale_id = sales_items.sale_id');
-        $builder->whereIn('sales.customer_id', $customer_ids);
-        $builder->where('sales.sale_status', COMPLETED);
-        $builder->groupBy('sales.customer_id');
-
-        $result = [];
-        foreach ($builder->get()->getResult() as $row) {
-            $result[(int)$row->customer_id] = $row;
-        }
-
-        return $result;
-    }
-
-    /**
      * Gets information about multiple customers
      */
     public function get_multiple_info(array $person_ids): ResultInterface

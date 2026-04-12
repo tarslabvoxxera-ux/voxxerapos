@@ -15,7 +15,7 @@ class Receiving extends Model
     protected $table = 'receivings';
     protected $primaryKey = 'receiving_id';
     protected $useAutoIncrement = true;
-    protected $useSoftDeletes = true;
+    protected $useSoftDeletes = false;
     protected $allowedFields = [
         'receiving_time',
         'supplier_id',
@@ -23,8 +23,7 @@ class Receiving extends Model
         'comment',
         'receiving_id',
         'payment_type',
-        'reference',
-        'deleted'
+        'reference'
     ];
 
     /**
@@ -246,11 +245,13 @@ class Receiving extends Model
             }
         }
 
-        // Mark items as deleted in link table? No, they don't have deleted column usually.
-        // Actually, just mark the receiving itself as deleted.
+        // Delete all items
+        $builder = $this->db->table('receivings_items');
+        $builder->delete(['receiving_id' => $receiving_id]);
+
+        // Delete sale itself
         $builder = $this->db->table('receivings');
-        $builder->where('receiving_id', $receiving_id);
-        $builder->update(['deleted' => 1]);
+        $builder->delete(['receiving_id' => $receiving_id]);
 
         // Execute transaction
         $this->db->transComplete();
@@ -293,7 +294,8 @@ class Receiving extends Model
             lang('Sales.check') => lang('Sales.check'),
             lang('Sales.debit') => lang('Sales.debit'),
             lang('Sales.credit') => lang('Sales.credit'),
-            lang('Sales.due') => lang('Sales.due')
+            lang('Sales.due') => lang('Sales.due'),
+            lang('Sales.upi') => lang('Sales.upi')
         ];
     }
 
@@ -334,22 +336,8 @@ class Receiving extends Model
             'receivings_items.line AS line',
             'MAX(`serialnumber`) AS serialnumber',
             'MAX(`' . $db_prefix . 'receivings_items`.`description`) AS description',
-            // Architecture note: for receivings (supplier purchase orders), tax is applied at the
-            // accounting / ERP layer — NOT at this POS receiving level.  Therefore subtotal and
-            // total are intentionally identical: both equal the line price after discount.  The
-            // separation is retained so report queries can JOIN this temp table using the same
-            // column names as the sales temp table without branching logic.
-            'MAX(CASE WHEN `' . $db_prefix . 'receivings_items`.`discount_type` = ' . PERCENT . '
-                THEN `item_unit_price` * `quantity_purchased` * `' . $db_prefix . 'receivings_items`.`receiving_quantity`
-                     - `item_unit_price` * `quantity_purchased` * `' . $db_prefix . 'receivings_items`.`receiving_quantity` * `discount` / 100
-                ELSE `item_unit_price` * `quantity_purchased` * `' . $db_prefix . 'receivings_items`.`receiving_quantity` - `discount`
-                END) AS subtotal',
-            // total = subtotal (see architecture note above; NOT a copy-paste error)
-            'MAX(CASE WHEN `' . $db_prefix . 'receivings_items`.`discount_type` = ' . PERCENT . '
-                THEN `item_unit_price` * `quantity_purchased` * `' . $db_prefix . 'receivings_items`.`receiving_quantity`
-                     - `item_unit_price` * `quantity_purchased` * `' . $db_prefix . 'receivings_items`.`receiving_quantity` * `discount` / 100
-                ELSE `item_unit_price` * `quantity_purchased` * `' . $db_prefix . 'receivings_items`.`receiving_quantity` - `discount`
-                END) AS total',
+            'MAX(CASE WHEN `' . $db_prefix . 'receivings_items`.`discount_type` = ' . PERCENT . ' THEN `item_unit_price` * `quantity_purchased` * `' . $db_prefix . 'receivings_items`.`receiving_quantity` - `item_unit_price` * `quantity_purchased` * `' . $db_prefix . 'receivings_items`.`receiving_quantity` * `discount` / 100 ELSE `item_unit_price` * `quantity_purchased` * `' . $db_prefix . 'receivings_items`.`receiving_quantity` - `discount` END) AS subtotal',
+            'MAX(CASE WHEN `' . $db_prefix . 'receivings_items`.`discount_type` = ' . PERCENT . ' THEN `item_unit_price` * `quantity_purchased` * `' . $db_prefix . 'receivings_items`.`receiving_quantity` - `item_unit_price` * `quantity_purchased` * `' . $db_prefix . 'receivings_items`.`receiving_quantity` * `discount` / 100 ELSE `item_unit_price` * `quantity_purchased` * `' . $db_prefix . 'receivings_items`.`receiving_quantity` - `discount` END) AS total',
             'MAX((CASE WHEN `' . $db_prefix . 'receivings_items`.`discount_type` = ' . PERCENT . ' THEN `item_unit_price` * `quantity_purchased` * `' . $db_prefix . 'receivings_items`.`receiving_quantity` - `item_unit_price` * `quantity_purchased` * `' . $db_prefix . 'receivings_items`.`receiving_quantity` * `discount` / 100 ELSE `item_unit_price` * `quantity_purchased` * `' . $db_prefix . 'receivings_items`.`receiving_quantity` - discount END) - (`item_cost_price` * `quantity_purchased`)) AS profit',
             'MAX(`item_cost_price` * `quantity_purchased` * `' . $db_prefix . 'receivings_items`.`receiving_quantity` ) AS cost'
         ]);

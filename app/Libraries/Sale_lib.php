@@ -84,6 +84,7 @@ class Sale_lib
         }
 
         $register_modes['return'] = lang('Sales.return');
+        $register_modes['exchange'] = lang('Sales.exchange');
 
         return $register_modes;
     }
@@ -263,7 +264,7 @@ class Sale_lib
      */
     public function get_sale_type(): ?int
     {
-        return $this->session->get('sale_type') ?? 0;
+        return $this->session->get('sale_type', 0);
     }
 
     /**
@@ -1063,7 +1064,7 @@ class Sale_lib
         $total = $this->get_item_total($quantity, $price, $applied_discount, $discount_type);
         $discounted_total = $this->get_item_total($quantity, $price, $applied_discount, $discount_type, true);
 
-        if (!empty($this->config['multi_pack_enabled'])) {
+        if ($this->config['multi_pack_enabled']) {
             $item_info->name .= NAME_SEPARATOR . $item_info->pack_name;
         }
 
@@ -1220,11 +1221,6 @@ class Sale_lib
     public function delete_item(int $line): void
     {
         $items = $this->get_cart();
-        
-        if (!isset($items[$line])) {
-            return;
-        }
-        
         $item_type = $items[$line]['item_type'];
 
         if ($item_type == ITEM_TEMP) {
@@ -1339,7 +1335,7 @@ class Sale_lib
      */
     public function get_sale_id(): int
     {
-        return $this->session->get('sale_id') ?? NEW_ENTRY;
+        return $this->session->get('sale_id');
     }
 
     /**
@@ -1380,7 +1376,7 @@ class Sale_lib
      */
     public function reset_cash_rounding(): int
     {
-        $cash_rounding_code = $this->config['cash_rounding_code'] ?? 0;
+        $cash_rounding_code = $this->config['cash_rounding_code'];
 
         if (cash_decimals() < totals_decimals() || $cash_rounding_code == Rounding_mode::HALF_FIVE) {    // TODO: convert to ternary notation.
             $cash_rounding = 1;    // TODO: Replace with constant
@@ -1579,7 +1575,7 @@ class Sale_lib
     {
         $item_total = $this->get_item_total($quantity, $price, $discount, $discount_type, true);
 
-        if (!empty($this->config['tax_included'])) {
+        if ($this->config['tax_included']) {
             $tax_fraction = bcdiv(bcadd('100', $tax_percentage), '100');
             $price_tax_excl = bcdiv($item_total, $tax_fraction);
 
@@ -1600,7 +1596,7 @@ class Sale_lib
     {
         $subtotal = '0.0';
         foreach ($this->get_cart() as $item) {
-            if ($exclude_tax && !empty($this->config['tax_included'])) {
+            if ($exclude_tax && $this->config['tax_included']) {
                 $subtotal = bcadd($subtotal, $this->get_item_total_tax_exclusive($item['item_id'], $item['quantity'], $item['price'], $item['discount'], $item['discount_type'], $include_discount));
             } else {
                 $subtotal = bcadd($subtotal, $this->get_item_total($item['quantity'], $item['price'], $item['discount'], $item['discount_type'], $include_discount));
@@ -1621,7 +1617,7 @@ class Sale_lib
 
         $cash_mode = $this->session->get('cash_mode');
 
-        if (!!empty($this->config['tax_included'])) {
+        if (!$this->config['tax_included']) {
             $cart = $this->get_cart();
             $tax_lib = new Tax_lib();
 
@@ -1653,7 +1649,7 @@ class Sale_lib
     public function check_for_cash_rounding(string $total): string
     {
         $cash_decimals = cash_decimals();
-        $cash_rounding_code = $this->config['cash_rounding_code'] ?? 0;
+        $cash_rounding_code = $this->config['cash_rounding_code'];
 
         return Rounding_mode::round_number($cash_rounding_code, (float)$total, $cash_decimals);
     }

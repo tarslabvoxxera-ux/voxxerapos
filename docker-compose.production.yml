@@ -30,8 +30,8 @@ services:
         environment:
             - MYSQL_ROOT_PASSWORD=ds4Q6YvBd/zaC5EaBudaeSAkgHfuoT1T
             - MYSQL_DATABASE=ospos
-            - MYSQL_USER=dbadmin
-            - MYSQL_PASSWORD=ds4Q6YvBd/zaC5EaBudaeSAkgHfuoT1T
+            - MYSQL_USER=admin
+            - MYSQL_PASSWORD=pointofsale
         healthcheck:
             test: ["CMD", "mariadb-admin", "ping", "-h", "localhost"]
             interval: 10s
@@ -57,8 +57,8 @@ services:
             - logs:/app/writable/logs
         environment:
             - CI_ENVIRONMENT=production
-            - MYSQL_USERNAME=dbadmin
-            - MYSQL_PASSWORD=ds4Q6YvBd/zaC5EaBudaeSAkgHfuoT1T
+            - MYSQL_USERNAME=admin
+            - MYSQL_PASSWORD=pointofsale
             - MYSQL_DB_NAME=ospos
             - MYSQL_HOST_NAME=mysql
             - PHP_TIMEZONE=Asia/Kolkata

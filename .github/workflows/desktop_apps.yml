@@ -1,0 +1,70 @@
+name: Desktop Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Desktop (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mysqli, bcmath, intl, gd, zip, mbstring, curl, xml, sqlite3
+          coverage: none
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Composer Dependencies
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: Install NPM Dependencies
+        run: npm install
+
+      - name: Create Desktop Bin Directory
+        run: mkdir -p desktop/bin/php
+
+      - name: Download Portable PHP (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://windows.php.net/downloads/releases/php-8.2.11-Win32-vs16-x64.zip" -OutFile "php.zip"
+          Expand-Archive -Path "php.zip" -DestinationPath "desktop/bin/php"
+          Remove-Item "php.zip"
+
+      - name: Download Portable PHP (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          # Use a pre-built static PHP binary for Mac
+          curl -L https://github.com/shivammathur/php-binaries/releases/download/v8.2.11/php-8.2.11-macos-x86_64.tar.gz -o php.tar.gz
+          tar -xzf php.tar.gz -C desktop/bin/php
+          rm php.tar.gz
+          # In some cases the binary is deeper in the folder
+          # mv desktop/bin/php/bin/php desktop/bin/php/php || true
+
+      - name: Build Electron App
+        run: npm run desktop:build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Voxxera-Desktop-${{ matrix.os }}
+          path: dist/*.${{ matrix.os == 'windows-latest' && 'exe' || 'dmg' }}

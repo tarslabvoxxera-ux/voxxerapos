@@ -11,7 +11,6 @@ return [
     "migration_needed"              => "A database migration to {0} will start after login.",
     "password"                      => "Password",
     "required_username"             => "The username field is required.",
-    "too_many_attempts"             => "Too many login attempts. Please wait {0} seconds before trying again.",
     "username"                      => "Username",
     "welcome"                       => "Welcome to {0}!",
 ];

@@ -6,7 +6,8 @@ use App\Models\Receiving;
 
 /**
  *
- * @property \App\Models\Receiving $receiving
+ *
+ * @property receiving receiving
  *
  */
 class Detailed_receivings extends Report
@@ -108,24 +109,17 @@ class Detailed_receivings extends Report
             $builder->having('items_purchased = 0');
         }
 
-        $builder->groupBy(['receiving_id', 'receiving_time']);
+        $builder->groupBy('receiving_id', 'receiving_time');
         $builder->orderBy('MAX(receiving_id)');
 
         $data = [];
         $data['summary'] = $builder->get()->getResultArray();
         $data['details'] = [];
 
-        if (!empty($data['summary'])) {
-            $receiving_ids = array_column($data['summary'], 'receiving_id');
-            $id_to_key = [];
-            foreach ($data['summary'] as $key => $value) {
-                $data['details'][$key] = [];
-                $id_to_key[$value['receiving_id']] = $key;
-            }
+        $builder = $this->db->table('receivings_items_temp');
 
-            $builder = $this->db->table('receivings_items_temp');
+        foreach ($data['summary'] as $key => $value) {
             $builder->select('
-                receivings_items_temp.receiving_id,
                 MAX(name) AS name,
                 MAX(item_number) AS item_number,
                 MAX(category) AS category,
@@ -147,14 +141,9 @@ class Detailed_receivings extends Report
                 $builder->join('attribute_values', 'attribute_values.attribute_id = attribute_links.attribute_id', 'left');
             }
 
-            $builder->whereIn('receivings_items_temp.receiving_id', $receiving_ids);
+            $builder->where('receivings_items_temp.receiving_id', $value['receiving_id']);
             $builder->groupBy('receivings_items_temp.receiving_id, receivings_items_temp.item_id');
-            
-            $all_details = $builder->get()->getResultArray();
-            foreach ($all_details as $detail) {
-                $key = $id_to_key[$detail['receiving_id']];
-                $data['details'][$key][] = $detail;
-            }
+            $data['details'][$key] = $builder->get()->getResultArray();
         }
 
         return $data;

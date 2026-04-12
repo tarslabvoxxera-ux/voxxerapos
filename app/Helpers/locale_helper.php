@@ -266,13 +266,10 @@ function get_payment_options(): array
         $payments[lang('Sales.credit')] = lang('Sales.credit');
     }
 
-    $payments[lang('Sales.due')]   = lang('Sales.due');
+    $payments[lang('Sales.due')] = lang('Sales.due');
     $payments[lang('Sales.check')] = lang('Sales.check');
 
-    // UPI and Split payment options
-    $payments[lang('Sales.upi')]           = lang('Sales.upi');
-    $payments[lang('Sales.half_cash_upi')] = lang('Sales.half_cash_upi');
-    $payments[lang('Sales.split_payment')] = lang('Sales.split_payment');
+    $payments[lang('Sales.upi')] = lang('Sales.upi');
 
     return $payments;
 }

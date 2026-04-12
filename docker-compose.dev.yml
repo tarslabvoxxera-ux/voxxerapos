@@ -40,7 +40,7 @@ services:
         depends_on:
             - mysql
         ports:
-            - "5056:80"
+            - "8085:80"
         networks:
             - app_net
         volumes:

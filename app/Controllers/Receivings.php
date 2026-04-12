@@ -46,28 +46,6 @@ class Receivings extends Secure_Controller
     }
 
     /**
-     * Populates $data with supplier info when a supplier is assigned.
-     * Extracted to eliminate duplicated code across postComplete(), getReceipt(), and _reload().
-     *
-     * @param int   $supplier_id
-     * @param array $data        Passed by reference
-     */
-    private function _loadSupplierData(int $supplier_id, array &$data): void
-    {
-        if ($supplier_id !== NO_SUPPLIER) {
-            $supplier_info = $this->supplier->get_info($supplier_id);
-            $data['supplier']          = $supplier_info->company_name;
-            $data['first_name']        = $supplier_info->first_name;
-            $data['last_name']         = $supplier_info->last_name;
-            $data['supplier_email']    = $supplier_info->email;
-            $data['supplier_address']  = $supplier_info->address_1;
-            $data['supplier_location'] = (!empty($supplier_info->zip) || !empty($supplier_info->city))
-                ? $supplier_info->zip . ' ' . $supplier_info->city
-                : '';
-        }
-    }
-
-    /**
      * @return void
      */
     public function getIndex(): void
@@ -295,11 +273,6 @@ class Receivings extends Secure_Controller
      */
     public function postDelete(int $receiving_id = -1, bool $update_inventory = true): void
     {
-        if ($this->request->getPost('double_confirm') !== 'confirmed') {
-            echo json_encode(['success' => false, 'message' => 'Double confirmation required.']);
-            return;
-        }
-
         $employee_id = $this->employee->get_logged_in_employee_info()->person_id;
         $receiving_ids = $receiving_id == -1 ? $this->request->getPost('ids', FILTER_SANITIZE_NUMBER_INT) : [$receiving_id];    // TODO: Replace -1 with constant
 
@@ -358,12 +331,24 @@ class Receivings extends Secure_Controller
         $data['employee'] = $employee_info->first_name . ' ' . $employee_info->last_name;
 
         $supplier_id = $this->receiving_lib->get_supplier();
-        $this->_loadSupplierData($supplier_id, $data);
+        if ($supplier_id != -1) {
+            $supplier_info = $this->supplier->get_info($supplier_id);
+            $data['supplier'] = $supplier_info->company_name;    // TODO: duplicated code
+            $data['first_name'] = $supplier_info->first_name;
+            $data['last_name'] = $supplier_info->last_name;
+            $data['supplier_email'] = $supplier_info->email;
+            $data['supplier_address'] = $supplier_info->address_1;
+            if (!empty($supplier_info->zip) or !empty($supplier_info->city)) {
+                $data['supplier_location'] = $supplier_info->zip . ' ' . $supplier_info->city;
+            } else {
+                $data['supplier_location'] = '';
+            }
+        }
 
         // SAVE receiving to database
         $data['receiving_id'] = 'RECV ' . $this->receiving->save_value($data['cart'], $supplier_id, $employee_id, $data['comment'], $data['reference'], $data['payment_type'], $data['stock_location']);
 
-        if ($data['receiving_id'] === 'RECV ' . NO_SUPPLIER) {
+        if ($data['receiving_id'] == 'RECV -1') {
             $data['error_message'] = lang('Receivings.transaction_failed');
         } else {
             $data['barcode'] = $this->barcode_lib->generate_receipt_barcode($data['receiving_id']);
@@ -422,8 +407,20 @@ class Receivings extends Secure_Controller
         $employee_info = $this->employee->get_info($receiving_info['employee_id']);
         $data['employee'] = $employee_info->first_name . ' ' . $employee_info->last_name;
 
-        $supplier_id = $this->receiving_lib->get_supplier();
-        $this->_loadSupplierData($supplier_id, $data);
+        $supplier_id = $this->receiving_lib->get_supplier();    // TODO: Duplicated code
+        if ($supplier_id != -1) {
+            $supplier_info = $this->supplier->get_info($supplier_id);
+            $data['supplier'] = $supplier_info->company_name;
+            $data['first_name'] = $supplier_info->first_name;
+            $data['last_name'] = $supplier_info->last_name;
+            $data['supplier_email'] = $supplier_info->email;
+            $data['supplier_address'] = $supplier_info->address_1;
+            if (!empty($supplier_info->zip) or !empty($supplier_info->city)) {
+                $data['supplier_location'] = $supplier_info->zip . ' ' . $supplier_info->city;
+            } else {
+                $data['supplier_location'] = '';
+            }
+        }
 
         $data['print_after_sale'] = false;
 
@@ -456,7 +453,20 @@ class Receivings extends Secure_Controller
         $data['payment_options'] = $this->receiving->get_payment_options();
 
         $supplier_id = $this->receiving_lib->get_supplier();
-        $this->_loadSupplierData($supplier_id, $data);
+
+        if ($supplier_id != -1) {    // TODO: Duplicated Code... replace -1 with a constant
+            $supplier_info = $this->supplier->get_info($supplier_id);
+            $data['supplier'] = $supplier_info->company_name;
+            $data['first_name'] = $supplier_info->first_name;
+            $data['last_name'] = $supplier_info->last_name;
+            $data['supplier_email'] = $supplier_info->email;
+            $data['supplier_address'] = $supplier_info->address_1;
+            if (!empty($supplier_info->zip) or !empty($supplier_info->city)) {
+                $data['supplier_location'] = $supplier_info->zip . ' ' . $supplier_info->city;
+            } else {
+                $data['supplier_location'] = '';
+            }
+        }
 
         $data['print_after_sale'] = $this->receiving_lib->is_print_after_sale();
 
