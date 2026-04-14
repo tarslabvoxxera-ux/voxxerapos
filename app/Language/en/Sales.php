@@ -74,7 +74,6 @@ return [
     "employee"                         => "Employee",
     "entry"                            => "Entry",
     "error_editing_item"               => "Error editing item",
-    "exchange"                         => "Exchange",
     "find_or_scan_item"                => "Find or Scan Item",
     "find_or_scan_item_or_receipt"     => "Find or Scan Item or Receipt",
     "giftcard"                         => "Gift Card",

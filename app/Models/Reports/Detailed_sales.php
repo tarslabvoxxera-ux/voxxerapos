@@ -47,6 +47,7 @@ class Detailed_sales extends Report
             'details' => [
                 lang('Reports.name'),
                 lang('Reports.category'),
+                lang('Reports.hsn_code'),
                 lang('Reports.item_number'),
                 lang('Reports.description'),
                 lang('Reports.quantity'),
@@ -177,6 +178,7 @@ class Detailed_sales extends Report
                 MAX(quantity_purchased) AS quantity_purchased,
                 MAX(item_location) AS item_location,
                 MAX(item_number) AS item_number,
+                MAX(hsn_code) AS hsn_code,
                 MAX(description) AS description,
                 MAX(subtotal) AS subtotal,
                 MAX(tax) AS tax,

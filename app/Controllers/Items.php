@@ -1023,8 +1023,8 @@ class Items extends Secure_Controller
                             if (empty($category)) {
                                 $category = !empty($item_name) ? $item_name : 'General';
                             }
-                            $cost_price = str_replace(',', '', $normalized_row['COST PRICE'] ?? $normalized_row['COSTPRICE'] ?? $normalized_row['COST_PRICE'] ?? '0');
-                            $unit_price = str_replace(',', '', $normalized_row['RETAIL PRICE'] ?? $normalized_row['RETAILPRICE'] ?? $normalized_row['RETAIL_PRICE'] ?? '0');
+                            $cost_price = preg_replace('/[^\d.]/', '', $normalized_row['COST PRICE'] ?? $normalized_row['COSTPRICE'] ?? $normalized_row['COST_PRICE'] ?? '0');
+                            $unit_price = preg_replace('/[^\d.]/', '', $normalized_row['RETAIL PRICE'] ?? $normalized_row['RETAILPRICE'] ?? $normalized_row['RETAIL_PRICE'] ?? '0');
                             // Default price if empty
                             if (empty($unit_price) || $unit_price === '0') {
                                 $unit_price = '0';
@@ -1033,7 +1033,7 @@ class Items extends Secure_Controller
                             // STOCK NO is the barcode
                             $barcode = $normalized_row['STOCK NO'] ?? $normalized_row['STOCKNO'] ?? $normalized_row['STOCK_NO'] ?? 
                                        $normalized_row['BARCODE'] ?? $item_description_code;
-                            $transqty = $normalized_row['TRANSQTY'] ?? $normalized_row['TRANS QTY'] ?? $normalized_row['TRANS_QTY'] ?? '';
+                            $transqty = preg_replace('/[^\d.]/', '', $normalized_row['TRANSQTY'] ?? $normalized_row['TRANS QTY'] ?? $normalized_row['TRANS_QTY'] ?? '');
                             
                             // Use ITEM DESCRIPTION as the description field
                             // Other fields (BRAND, STYLE, COLOR, SIZE, UOM, GST GROUP) are saved as attributes
@@ -1194,7 +1194,7 @@ class Items extends Secure_Controller
     private function data_error_check(array $row, array $item_data, array $allowed_locations, array $definition_names, array $attribute_data): bool    // TODO: Long function and large number of parameters in the declaration... perhaps refactoring is needed
     {
         // Support both original format (Id) and normalized format (ID) and custom format (no Id)
-        $item_id = $row['Id'] ?? $row['ID'] ?? $item_data['item_id'] ?? 0;
+        $item_id = $item_data['item_id'] ?? $row['Id'] ?? $row['ID'] ?? 0;
         $is_update = (bool)$item_id;
 
         // Check for empty required fields
@@ -1239,14 +1239,14 @@ class Items extends Secure_Controller
         }
         // Check TRANSQTY for custom format - remove commas before numeric check
         if (isset($row['TRANSQTY']) && $row['TRANSQTY'] !== '') {
-            $check_for_numeric_values['TRANSQTY'] = str_replace(',', '', $row['TRANSQTY']);
+            $check_for_numeric_values['TRANSQTY'] = preg_replace('/[^\d.]/', '', $row['TRANSQTY']);
         }
-        // Check COST PRICE and RETAIL PRICE for custom format - remove commas before numeric check
+        // Check COST PRICE and RETAIL PRICE for custom format - remove commas and currency symbols before numeric check
         if (isset($row['COST PRICE']) && $row['COST PRICE'] !== '') {
-            $check_for_numeric_values['COST PRICE'] = str_replace(',', '', $row['COST PRICE']);
+            $check_for_numeric_values['COST PRICE'] = preg_replace('/[^\d.]/', '', $row['COST PRICE']);
         }
         if (isset($row['RETAIL PRICE']) && $row['RETAIL PRICE'] !== '') {
-            $check_for_numeric_values['RETAIL PRICE'] = str_replace(',', '', $row['RETAIL PRICE']);
+            $check_for_numeric_values['RETAIL PRICE'] = preg_replace('/[^\d.]/', '', $row['RETAIL PRICE']);
         }
 
         foreach ($allowed_locations as $location_name) {

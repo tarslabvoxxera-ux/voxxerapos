@@ -1112,6 +1112,7 @@ class Sale extends Model
                     items.item_id AS item_id,
                     MAX(' . $item->get_item_name() . ') AS name,
                     MAX(items.item_number) AS item_number,
+                    MAX(items.hsn_code) AS hsn_code,
                     MAX(items.category) AS category,
                     MAX(items.supplier_id) AS supplier_id,
                     MAX(sales_items.quantity_purchased) AS quantity_purchased,

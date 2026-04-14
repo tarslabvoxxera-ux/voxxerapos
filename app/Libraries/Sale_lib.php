@@ -84,7 +84,6 @@ class Sale_lib
         }
 
         $register_modes['return'] = lang('Sales.return');
-        $register_modes['exchange'] = lang('Sales.exchange');
 
         return $register_modes;
     }

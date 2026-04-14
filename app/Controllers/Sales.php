@@ -243,7 +243,7 @@ class Sales extends Secure_Controller
         $mode = $this->request->getPost('mode', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $this->sale_lib->set_mode($mode);
 
-        if ($mode == 'sale' || $mode == 'exchange') {
+        if ($mode == 'sale') {
             $this->sale_lib->set_sale_type(SALE_TYPE_POS);
         } elseif ($mode == 'sale_quote') {
             $this->sale_lib->set_sale_type(SALE_TYPE_QUOTE);
