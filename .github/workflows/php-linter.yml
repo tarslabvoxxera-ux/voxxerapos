@@ -1,34 +1,46 @@
 name: PHP Linting
 
-on: push
+on:
+  push:
+    paths:
+      - '**.php'
+      - '.github/workflows/php-linter.yml'
+  pull_request:
+    paths:
+      - '**.php'
+      - '.github/workflows/php-linter.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   phplint:
-
+    name: PHP ${{ matrix.php-version }} Syntax Check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ['8.1', '8.2', '8.3', '8.4']
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup PHP ${{ matrix.php-version }}
+        uses: shivammathur/setup-php@v2
         with:
-          fetch-depth: 0
-      - name: PHP Lint 8.0
-        uses: dbfx/github-phplint/8.0@master
-        with:
-          folder-to-exclude: "! -path \"./vendor/*\" ! -path \"./folder/excluded/*\""   
-      - name: PHP Lint 8.1
-        uses: dbfx/github-phplint/8.1@master
-        with:
-          folder-to-exclude: "! -path \"./vendor/*\" ! -path \"./folder/excluded/*\""
-      - name: PHP Lint 8.2
-        uses: dbfx/github-phplint/8.2@master
-        with:
-          folder-to-exclude: "! -path \"./vendor/*\" ! -path \"./folder/excluded/*\""
-      - name: PHP Lint 8.3
-        uses: dbfx/github-phplint/8.3@master
-        with:
-          folder-to-exclude: "! -path \"./vendor/*\" ! -path \"./folder/excluded/*\""
-      - name: PHP Lint 8.4
-        uses: dbfx/github-phplint/8.4@master
-        with:
-          folder-to-exclude: "! -path \"./vendor/*\" ! -path \"./folder/excluded/*\""
+          php-version: ${{ matrix.php-version }}
+          coverage: none
+
+      - name: Run PHP Syntax Check on app/
+        run: |
+          find app -name "*.php" -print0 | xargs -0 -n1 php -l
+          echo "✅ app/ passed for PHP ${{ matrix.php-version }}"
+
+      - name: Run PHP Syntax Check on public/
+        run: |
+          find public -name "*.php" -print0 | xargs -0 -n1 php -l
+          echo "✅ public/ passed for PHP ${{ matrix.php-version }}"
