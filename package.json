@@ -2,7 +2,7 @@
     "name": "@opensourcepos/opensourcepos",
     "version": "3.4.2",
     "description": "pen Source Point of Sale is a web based point of sale system written in the PHP language. It uses MySQL as the data storage back-end and has a simple user interface.",
-    "main": "index.php",
+    "main": "desktop/main.js",
     "license": "MIT",
     "authors": [
         "jekkos <jekkos - at - opensourcepos.org>",
@@ -34,28 +34,45 @@
         "appId": "com.voxxera.pos",
         "productName": "Voxxera POS",
         "directories": {
-            "output": "dist"
+            "output": "dist-desktop"
         },
         "files": [
-            "**/*",
-            "desktop/main.js",
-            "desktop/preload.js",
-            "desktop/bin/**/*",
-            "!dist",
-            "!.github",
-            "!tests"
+            "desktop/**/*",
+            "app/**/*",
+            "public/**/*",
+            "vendor/**/*",
+            "writable/**/*",
+            "spark",
+            ".env",
+            "!writable/logs/**",
+            "!writable/session/**",
+            "!node_modules/**",
+            "!dist-desktop/**",
+            "!.github/**",
+            "!tests/**"
+        ],
+        "extraResources": [
+            {
+                "from": "desktop/bin",
+                "to": "bin"
+            }
         ],
         "mac": {
             "target": [
-                "dmg",
-                "zip"
+                { "target": "dmg", "arch": ["x64", "arm64"] }
             ],
-            "category": "public.app-category.business"
+            "category": "public.app-category.business",
+            "icon": "branding/emblem.png"
         },
         "win": {
             "target": [
-                "nsis"
-            ]
+                { "target": "nsis", "arch": ["x64"] }
+            ],
+            "icon": "branding/emblem.png"
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true
         }
     },
     "type": "module",
@@ -95,6 +112,8 @@
         "tableexport.jquery.plugin": "^1.30.0"
     },
     "devDependencies": {
+        "electron": "^33.0.0",
+        "electron-builder": "^25.1.8",
         "gulp": "^5.0.0",
         "gulp-clean": "^0.4.0",
         "gulp-clean-css": "^4.3.0",

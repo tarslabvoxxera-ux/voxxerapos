@@ -5,12 +5,12 @@ on:
     paths:
       - '**.php'
       - 'spark'
-      - '.github/workflows/test-coding-standards.yml'
+      - '.github/workflows/main.yml'
   pull_request:
     paths:
       - '**.php'
       - 'spark'
-      - '.github/workflows/test-coding-standards.yml'
+      - '.github/workflows/main.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -23,8 +23,8 @@ jobs:
   lint:
     name: PHP ${{ matrix.php-version }} Lint with PHP CS Fixer
     runs-on: ubuntu-22.04
-
     timeout-minutes: 15
+
     strategy:
       fail-fast: false
       matrix:
@@ -49,16 +49,17 @@ jobs:
         run: echo "COMPOSER_CACHE_FILES_DIR=$(composer config cache-files-dir)" >> $GITHUB_ENV
 
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ env.COMPOSER_CACHE_FILES_DIR }}
-          key: ${{ runner.os }}-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-composer-lint-${{ matrix.php-version }}-${{ hashFiles('**/composer.json') }}
           restore-keys: |
-            ${{ runner.os }}-${{ matrix.php-version }}-
-            ${{ runner.os }}-
+            ${{ runner.os }}-composer-lint-${{ matrix.php-version }}-
+            ${{ runner.os }}-composer-lint-
 
       - name: Install dependencies
-        run: composer install --ansi --no-interaction --prefer-dist
+        run: composer update --ansi --no-interaction --no-progress --prefer-dist
 
       - name: Run lint on `app/`, `public/`
         run: vendor/bin/php-cs-fixer fix --verbose --ansi --dry-run --config=.php-cs-fixer.no-header.php --using-cache=no --diff
+
