@@ -20,34 +20,34 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            php_zip: "https://windows.php.net/downloads/releases/php-8.2.28-Win32-vs16-x64.zip"
-            artifact_ext: "exe"
+            artifact_name: Voxxera-POS-Windows
+            artifact_ext: "*.exe"
           - os: macos-latest
-            artifact_ext: "dmg"
+            artifact_name: Voxxera-POS-macOS
+            artifact_ext: "*.dmg"
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup PHP
+      - name: Setup PHP 8.2
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
           extensions: mysqli, bcmath, intl, gd, zip, mbstring, curl, xml
           coverage: none
 
-      - name: Setup Node.js
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Cache Node Modules
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          key: ${{ runner.os }}-node-${{ hashFiles('package.json') }}
+          restore-keys: ${{ runner.os }}-node-
 
       - name: Install Composer Dependencies
         run: composer install --no-dev --optimize-autoloader --no-interaction
@@ -55,85 +55,74 @@ jobs:
       - name: Install NPM Dependencies
         run: npm install
 
-      # ─── Download portable PHP binary for Windows ───────────────────────────
-      - name: Download Portable PHP (Windows)
+      # ── Windows: download portable PHP so app works without system PHP ──────
+      - name: Bundle Portable PHP (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path desktop/bin/php | Out-Null
-          Invoke-WebRequest -Uri "${{ matrix.php_zip }}" -OutFile "php.zip"
+          $url = "https://windows.php.net/downloads/releases/php-8.2.28-Win32-vs16-x64.zip"
+          Write-Host "Downloading PHP from $url"
+          Invoke-WebRequest -Uri $url -OutFile "php.zip" -TimeoutSec 120
           Expand-Archive -Path "php.zip" -DestinationPath "desktop/bin/php" -Force
           Remove-Item "php.zip"
-          # Copy php.ini-production as php.ini
-          if (Test-Path "desktop/bin/php/php.ini-production") {
-            Copy-Item "desktop/bin/php/php.ini-production" "desktop/bin/php/php.ini"
+          # Enable required extensions in php.ini
+          $iniSrc = "desktop/bin/php/php.ini-production"
+          $iniDst = "desktop/bin/php/php.ini"
+          if (Test-Path $iniSrc) {
+            Copy-Item $iniSrc $iniDst
+            (Get-Content $iniDst) -replace ';extension=mysqli', 'extension=mysqli' `
+              -replace ';extension=intl', 'extension=intl' `
+              -replace ';extension=gd', 'extension=gd' `
+              -replace ';extension=mbstring', 'extension=mbstring' `
+              -replace ';extension=openssl', 'extension=openssl' | Set-Content $iniDst
           }
-          Write-Host "PHP binary ready:"
-          Get-ChildItem desktop/bin/php/*.exe
+          Write-Host "PHP bundled:"
+          & "desktop/bin/php/php.exe" -v
 
-      # ─── Use system PHP on macOS (already set up by shivammathur) ───────────
-      - name: Prepare PHP for macOS
+      # ── macOS: copy the system PHP (already set up by shivammathur) ─────────
+      - name: Bundle System PHP (macOS)
         if: matrix.os == 'macos-latest'
         run: |
           mkdir -p desktop/bin/php
-          PHP_PATH=$(which php)
-          echo "Using system PHP at: $PHP_PATH"
-          cp "$PHP_PATH" desktop/bin/php/php
+          PHP_BIN=$(which php)
+          echo "Copying PHP from: $PHP_BIN"
+          cp "$PHP_BIN" desktop/bin/php/php
           chmod +x desktop/bin/php/php
           desktop/bin/php/php -v
 
-      # ─── Fix branding icon (electron-builder needs png not svg) ────────────
-      - name: Check Icon
-        shell: bash
-        run: |
-          if [ -f branding/emblem.png ]; then
-            echo "Icon found: branding/emblem.png"
-          else
-            echo "No PNG icon found, creating placeholder"
-            mkdir -p branding
-            # Download a placeholder 512x512 icon
-            curl -L "https://raw.githubusercontent.com/opensourcepos/opensourcepos/master/branding/emblem.svg" -o branding/emblem.svg 2>/dev/null || true
-          fi
-
-      # ─── Build Electron app ─────────────────────────────────────────────────
-      - name: Build Electron App (Windows)
+      # ── Build Electron installers ────────────────────────────────────────────
+      - name: Build Desktop App (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: npx electron-builder --win --x64 --publish never
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Electron App (macOS)
+      - name: Build Desktop App (macOS)
         if: matrix.os == 'macos-latest'
         run: npx electron-builder --mac --x64 --arm64 --publish never
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
-      # ─── List dist files for debug ──────────────────────────────────────────
+      # ── Debug: list generated files ─────────────────────────────────────────
       - name: List Output Files
         shell: bash
-        run: ls -lh dist-desktop/ || true
+        run: |
+          echo "=== dist-desktop contents ==="
+          ls -lh dist-desktop/ 2>/dev/null || echo "dist-desktop not found!"
 
-      # ─── Upload artifacts to GitHub Actions download ────────────────────────
-      - name: Upload Windows Installer
-        if: matrix.os == 'windows-latest'
+      # ── Upload artifacts (always available for download from Actions) ────────
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Voxxera-POS-Windows
-          path: dist-desktop/*.exe
+          name: ${{ matrix.artifact_name }}
+          path: dist-desktop/${{ matrix.artifact_ext }}
           if-no-files-found: error
 
-      - name: Upload macOS Installer
-        if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: Voxxera-POS-macOS
-          path: dist-desktop/*.dmg
-          if-no-files-found: error
-
-      # ─── Attach to GitHub Release if triggered by a tag push ────────────────
-      - name: Upload to GitHub Release
+      # ── Attach to GitHub Release when triggered by a version tag ────────────
+      - name: Attach to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:

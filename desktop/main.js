@@ -76,15 +76,14 @@ async function startPhpServer() {
 
 function createWindow() {
     mainWindow = new BrowserWindow({
-        width: 1200,
+        width: 1280,
         height: 800,
         title: 'Voxxera POS',
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            preload: path.join(__dirname, 'preload.js')
-        },
-        icon: path.join(__dirname, 'icon.png')
+            preload: path.join(__dirname, 'preload.cjs')
+        }
     });
 
     const localIp = getLocalIp();

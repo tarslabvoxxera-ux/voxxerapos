@@ -61,14 +61,12 @@
             "target": [
                 { "target": "dmg", "arch": ["x64", "arm64"] }
             ],
-            "category": "public.app-category.business",
-            "icon": "branding/emblem.png"
+            "category": "public.app-category.business"
         },
         "win": {
             "target": [
                 { "target": "nsis", "arch": ["x64"] }
-            ],
-            "icon": "branding/emblem.png"
+            ]
         },
         "nsis": {
             "oneClick": false,
