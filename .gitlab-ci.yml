@@ -1,0 +1,52 @@
+stages:
+  - build
+
+variables:
+  NODE_VERSION: "22"
+  PHP_VERSION: "8.2"
+
+# Template for desktop builds
+.desktop_build_template:
+  stage: build
+  script:
+    - php -v
+    - node -v
+    - composer install --no-dev --optimize-autoloader --no-interaction
+    - npm install
+    # macOS Specific PHP Bundling
+    - |
+      if [[ "$CI_RUNNER_TAGS" == *"macos"* ]]; then
+        mkdir -p desktop/bin/php
+        PHP_BIN=$(which php)
+        cp "$PHP_BIN" desktop/bin/php/php
+        chmod +x desktop/bin/php/php
+        npx electron-builder --mac --x64 --publish never
+      fi
+    # Windows Specific PHP Bundling
+    - |
+      if [[ "$CI_RUNNER_TAGS" == *"windows"* ]]; then
+        mkdir desktop/bin/php -ErrorAction SilentlyContinue
+        $phpPath = (Get-Command php).Source
+        $phpDir = Split-Path $phpPath -Parent
+        Copy-Item "$phpDir\*" "desktop\bin\php\" -Recurse -Force
+        npx electron-builder --win --x64 --publish never
+      fi
+  artifacts:
+    paths:
+      - dist-desktop/*.exe
+      - dist-desktop/*.dmg
+    expire_in: 30 days
+
+build:macos:
+  extends: .desktop_build_template
+  tags:
+    - saas-macos-medium-m1  # High-performance GitLab SaaS macOS runner
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v/
+
+build:windows:
+  extends: .desktop_build_template
+  tags:
+    - saas-windows-medium-amd64 # GitLab SaaS Windows runner
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v/
