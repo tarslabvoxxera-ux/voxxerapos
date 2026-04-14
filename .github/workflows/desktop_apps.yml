@@ -22,7 +22,7 @@ jobs:
           - os: windows-latest
             artifact_name: Voxxera-POS-Windows
             artifact_ext: "*.exe"
-          - os: macos-latest
+          - os: macos-13
             artifact_name: Voxxera-POS-macOS
             artifact_ext: "*.dmg"
 
