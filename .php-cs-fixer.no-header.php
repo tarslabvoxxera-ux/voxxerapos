@@ -23,10 +23,7 @@ $finder = Finder::create()
         __DIR__ . '/app',
         __DIR__ . '/public',
     ])
-    ->exclude(['Views/errors/html'])
-    ->append([
-        __DIR__ . '/admin/starter/builds',
-    ]);
+    ->exclude(['Views/errors/html']);
 
 $overrides = [
     // For updating to coding-standard

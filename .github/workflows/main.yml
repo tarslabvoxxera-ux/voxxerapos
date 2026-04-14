@@ -24,6 +24,7 @@ jobs:
     name: PHP ${{ matrix.php-version }} Lint with PHP CS Fixer
     runs-on: ubuntu-22.04
 
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -57,7 +58,7 @@ jobs:
             ${{ runner.os }}-
 
       - name: Install dependencies
-        run: composer update --ansi --no-interaction
+        run: composer install --ansi --no-interaction --prefer-dist
 
       - name: Run lint on `app/`, `public/`
         run: vendor/bin/php-cs-fixer fix --verbose --ansi --dry-run --config=.php-cs-fixer.no-header.php --using-cache=no --diff
