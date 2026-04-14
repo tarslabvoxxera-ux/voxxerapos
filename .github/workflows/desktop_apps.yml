@@ -55,30 +55,19 @@ jobs:
       - name: Install NPM Dependencies
         run: npm install
 
-      # ── Windows: download portable PHP so app works without system PHP ──────
+      # ── Windows: copy PHP that shivammathur/setup-php already installed ──────
       - name: Bundle Portable PHP (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path desktop/bin/php | Out-Null
-          $url = "https://windows.php.net/downloads/releases/php-8.2.28-Win32-vs16-x64.zip"
-          Write-Host "Downloading PHP from $url"
-          Invoke-WebRequest -Uri $url -OutFile "php.zip" -TimeoutSec 120
-          Expand-Archive -Path "php.zip" -DestinationPath "desktop/bin/php" -Force
-          Remove-Item "php.zip"
-          # Enable required extensions in php.ini
-          $iniSrc = "desktop/bin/php/php.ini-production"
-          $iniDst = "desktop/bin/php/php.ini"
-          if (Test-Path $iniSrc) {
-            Copy-Item $iniSrc $iniDst
-            (Get-Content $iniDst) -replace ';extension=mysqli', 'extension=mysqli' `
-              -replace ';extension=intl', 'extension=intl' `
-              -replace ';extension=gd', 'extension=gd' `
-              -replace ';extension=mbstring', 'extension=mbstring' `
-              -replace ';extension=openssl', 'extension=openssl' | Set-Content $iniDst
-          }
-          Write-Host "PHP bundled:"
-          & "desktop/bin/php/php.exe" -v
+          # shivammathur/setup-php installs PHP into a known directory on Windows runners
+          $phpExe = (Get-Command php).Source
+          $phpDir = Split-Path $phpExe -Parent
+          Write-Host "Copying PHP from: $phpDir"
+          Copy-Item "$phpDir\*" "desktop\bin\php\" -Recurse -Force
+          & "desktop\bin\php\php.exe" -v
+          Write-Host "PHP bundled successfully"
 
       # ── macOS: copy the system PHP (already set up by shivammathur) ─────────
       - name: Bundle System PHP (macOS)
