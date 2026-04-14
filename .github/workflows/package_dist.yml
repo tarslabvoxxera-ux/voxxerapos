@@ -11,6 +11,8 @@ jobs:
   build:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+
     strategy:
       fail-fast: false
       matrix:
@@ -30,16 +32,45 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '22'
+
+    - name: Cache Node Modules
+      uses: actions/cache@v4
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+
+    - name: Cache Composer dependencies
+      uses: actions/cache@v4
+      with:
+        path: vendor
+        key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-composer-
 
     - name: Install Composer Dependencies
-      run: composer install --no-ansi --no-interaction --no-progress --optimize-autoloader
+      run: composer install --no-dev --no-ansi --no-interaction --no-progress --optimize-autoloader
 
     - name: Install NPM Dependencies
       run: npm install
 
-    - name: Run Gulp Build
-      run: npm run build
+    # Run build tasks individually to skip the license-generation step
+    # which requires subprocess spawning (unreliable on CI)
+    - name: Run Gulp Build (no licenses)
+      run: |
+        npx gulp clean
+        npx gulp copy-bootswatch
+        npx gulp copy-bootswatch5
+        npx gulp copy-bootstrap
+        npx gulp debug-js
+        npx gulp prod-js
+        npx gulp debug-css
+        npx gulp prod-css
+        npx gulp copy-fonts
+        npx gulp copy-menubar
+        npx gulp build-database
 
     - name: Create Package
       run: npx gulp compress
@@ -47,6 +78,6 @@ jobs:
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: opensourcepos-${{ matrix.os }}
+        name: voxxera-pos-${{ matrix.os }}
         path: dist/opensourcepos.zip
         if-no-files-found: error
