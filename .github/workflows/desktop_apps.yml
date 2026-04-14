@@ -87,13 +87,16 @@ jobs:
         run: npx electron-builder --win --x64 --publish never
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Build Desktop App (macOS)
         if: matrix.os == 'macos-latest'
-        run: npx electron-builder --mac --x64 --arm64 --publish never
+        # Build x64 only on CI to avoid OOM — universal builds need too much RAM
+        run: npx electron-builder --mac --x64 --publish never
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
       # ── Debug: list generated files ─────────────────────────────────────────
       - name: List Output Files
@@ -102,13 +105,15 @@ jobs:
           echo "=== dist-desktop contents ==="
           ls -lh dist-desktop/ 2>/dev/null || echo "dist-desktop not found!"
 
-      # ── Upload artifacts (always available for download from Actions) ────────
+      # ── Upload artifacts only on tag-triggered builds (saves quota) ──────────
       - name: Upload Artifact
+        if: startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: dist-desktop/${{ matrix.artifact_ext }}
           if-no-files-found: error
+          retention-days: 30
 
       # ── Attach to GitHub Release when triggered by a version tag ────────────
       - name: Attach to GitHub Release
