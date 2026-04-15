@@ -53,6 +53,25 @@ if (isset($error_message)) {
             <div class="btn btn-info btn-sm" id="show_email_button"><?= '<span class="glyphicon glyphicon-envelope">&nbsp;</span>' . lang('Sales.send_receipt') ?></div>
         </a>
     <?php endif; ?>
+    <a href="<?= site_url("sales/downloadPdf/$sale_id_num") ?>">
+        <div class="btn btn-warning btn-sm" id="show_pdf_button">
+            <?= '<span class="glyphicon glyphicon-download-alt">&nbsp;</span>Download PDF' ?>
+        </div>
+    </a>
+    <?php if (!empty($customer_phone)): ?>
+        <?php
+            // Clean phone number (remove non-digits, keep leading + if present)
+            $wa_phone = preg_replace('/[^0-9+]/', '', $customer_phone);
+            // Example WhatsApp message
+            $wa_message = rawurlencode(lang('Sales.receipt') . ' - ' . $config['company'] . "\nThank you for shopping!\nReceipt URL: " . site_url("sales/receipt/$sale_id_num"));
+            $wa_url = "https://wa.me/{$wa_phone}?text={$wa_message}";
+        ?>
+        <a href="<?= $wa_url ?>" target="_blank">
+            <div class="btn btn-success btn-sm" id="show_whatsapp_button" style="background-color: #25D366; border-color: #25D366; color: white;">
+                <?= '<span class="glyphicon glyphicon-phone">&nbsp;</span>WhatsApp' ?>
+            </div>
+        </a>
+    <?php endif; ?>
     <?= anchor('sales', '<span class="glyphicon glyphicon-shopping-cart">&nbsp;</span>' . lang('Sales.register'), ['class' => 'btn btn-info btn-sm', 'id' => 'show_sales_button']) ?>
     <?php
     $employee = model(Employee::class);

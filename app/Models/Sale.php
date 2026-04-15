@@ -1379,6 +1379,17 @@ class Sale extends Model
                 $total_amount_earned = ($total_amount * $points_percent / 100);
                 $points = $points + $total_amount_earned;
 
+                // Custom Logic: When customer reaches 1000 points, reward them with a 5% discount in their record.
+                if ($points >= 1000) {
+                    $customer_info = $customer->get_info($customer_id);
+                    if ((float)$customer_info->discount !== 5.0) {
+                        $this->db->table('customers')->where('person_id', $customer_id)->update([
+                            'discount'      => 5,
+                            'discount_type' => PERCENT
+                        ]);
+                    }
+                }
+
                 $customer->update_reward_points_value($customer_id, $points);
 
                 $rewards_data = ['sale_id' => $sale_id, 'earned' => $total_amount_earned, 'used' => $total_amount_used];

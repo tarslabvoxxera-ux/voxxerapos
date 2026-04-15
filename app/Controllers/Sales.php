@@ -980,6 +980,24 @@ class Sales extends Secure_Controller
     }
 
     /**
+     * Download the receipt PDF. Used to manually share to WhatsApp/etc.
+     *
+     * @param int $sale_id
+     * @return \CodeIgniter\HTTP\ResponseInterface|void
+     */
+    public function getDownloadPdf(int $sale_id)
+    {
+        $this->receipt_pdf = new \App\Libraries\Receipt_pdf();
+        $filepath = $this->receipt_pdf->get_receipt_file($sale_id);
+        
+        if ($filepath && file_exists($filepath)) {
+            return $this->response->download($filepath, null)->setFileName('Receipt_SALE_' . $sale_id . '.pdf');
+        } else {
+            echo "Receipt PDF not found. It may not have been generated yet.";
+        }
+    }
+
+    /**
      * @param int $customer_id
      * @param array $data
      * @param bool $stats
@@ -1002,6 +1020,7 @@ class Sales extends Secure_Controller
             $data['first_name'] = $customer_info->first_name;
             $data['last_name'] = $customer_info->last_name;
             $data['customer_email'] = $customer_info->email;
+            $data['customer_phone'] = $customer_info->phone_number;
             $data['customer_address'] = $customer_info->address_1;
 
             if (!empty($customer_info->zip) || !empty($customer_info->city)) {

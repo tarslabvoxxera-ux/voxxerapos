@@ -21,7 +21,7 @@ services:
         container_name: voxxera_mysql_prod
         restart: unless-stopped
         ports:
-            - "3306:3306"
+            - "3307:3306"
         networks:
             - voxxera_net
         volumes:
