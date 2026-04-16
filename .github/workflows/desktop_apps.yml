@@ -79,12 +79,8 @@ jobs:
   # ───────────────────────────────────────────────────────────────────────────
   build:
     name: Build for ${{ matrix.os }}
-
-    # Run after auto_tag (when triggered from main/master), or immediately
-    # when triggered by a vX tag push or workflow_dispatch.
     needs: [auto_tag]
     if: always() && (needs.auto_tag.result == 'success' || needs.auto_tag.result == 'skipped')
-
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
 
@@ -95,16 +91,14 @@ jobs:
           - os: windows-latest
             artifact_name: Voxxera-POS-Windows
             artifact_ext: "*.exe"
-          - os: macos-12            # ← FIXED: was 'macos-latest' (typo)
+          - os: macos-12
             artifact_name: Voxxera-POS-macOS
             artifact_ext: "*.dmg"
 
     steps:
-      # ── Source ─────────────────────────────────────────────────────────────
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # ── Runtime setup ──────────────────────────────────────────────────────
       - name: Setup PHP 8.2
         uses: shivammathur/setup-php@v2
         with:
@@ -117,7 +111,6 @@ jobs:
         with:
           node-version: '22'
 
-      # ── Dependency cache ───────────────────────────────────────────────────
       - name: Cache Node Modules
         uses: actions/cache@v4
         with:
@@ -132,115 +125,89 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
-      # ── Install dependencies ───────────────────────────────────────────────
       - name: Install Composer Dependencies
         run: composer install --no-dev --optimize-autoloader --no-interaction
 
       - name: Install NPM Dependencies
         run: npm install
 
-      # ── Bundle portable PHP (Windows) ──────────────────────────────────────
-      # shivammathur/setup-php already installed PHP with all required
-      # extensions.  We copy the ENTIRE PHP directory (exe + DLLs + ext/)
-      # so the bundled PHP is fully self-contained.
       - name: Bundle Portable PHP (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path desktop/bin/php | Out-Null
-
-          # Locate the PHP installation directory installed by shivammathur
           $phpExe = (Get-Command php).Source
           $phpDir = Split-Path $phpExe -Parent
-          Write-Host "Copying PHP from: $phpDir"
-
-          # Copy everything: php.exe, php.ini, DLLs, ext/ subfolder, etc.
           Copy-Item "$phpDir\*" "desktop\bin\php\" -Recurse -Force
-
-          # Verify the bundled binary works
           & "desktop\bin\php\php.exe" -v
-          Write-Host "PHP bundled successfully ✔"
-
-          # Create a minimal php.ini that enables all extensions we need
+          
+          # Fix: Heredoc must NOT have indentation
           $ini = @"
-          extension_dir = "ext"
-          extension=mysqli
-          extension=pdo_mysql
-          extension=pdo_sqlite
-          extension=mbstring
-          extension=curl
-          extension=gd
-          extension=intl
-          extension=zip
-          extension=fileinfo
-          extension=openssl
-          "@
-          # Append to existing php.ini rather than replace it
+extension_dir = "ext"
+extension=mysqli
+extension=pdo_mysql
+extension=pdo_sqlite
+extension=mbstring
+extension=curl
+extension=gd
+extension=intl
+extension=zip
+extension=fileinfo
+extension=openssl
+"@
           Add-Content "desktop\bin\php\php.ini" $ini
-          Write-Host "php.ini updated ✔"
 
-      # ── Bundle portable PHP (macOS) ────────────────────────────────────────
-      # shivammathur puts PHP at $(which php).  For macOS we copy the binary;
-      # required shared libs are usually in the system dyld cache already.
       - name: Bundle System PHP (macOS)
-        if: matrix.os == 'macos-12'      # ← FIXED: was 'macos-latest'
+        if: matrix.os == 'macos-12'
         run: |
           mkdir -p desktop/bin/php
-          PHP_BIN=$(which php)
-          PHP_DIR=$(dirname "$PHP_BIN")
-          echo "Copying PHP from: $PHP_DIR"
-          cp "$PHP_BIN" desktop/bin/php/php
+          cp $(which php) desktop/bin/php/php
           chmod +x desktop/bin/php/php
-
-          # Copy extension directory if it exists alongside the binary
-          EXT_DIR="$PHP_DIR/../lib/php/extensions"
-          if [ -d "$EXT_DIR" ]; then
-            mkdir -p desktop/bin/php/ext
-            cp -r "$EXT_DIR"/no-debug-*/* desktop/bin/php/ext/ 2>/dev/null || true
-          fi
-
           desktop/bin/php/php -v
-          echo "PHP bundled ✔"
 
-      # ── Build Electron installers ──────────────────────────────────────────
-      - name: Build Desktop App (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
+      - name: Build Desktop App
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max-old-space-size=8192"
-        run: npx electron-builder --win --x64 --publish never
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            npx electron-builder --win --x64 --publish never
+          else
+            npx electron-builder --mac --x64 --publish never
+          fi
+        shell: bash
 
-      - name: Build Desktop App (macOS)
-        if: matrix.os == 'macos-12'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-          NODE_OPTIONS: "--max-old-space-size=8192"
-        run: npx electron-builder --mac --x64 --publish never
-
-      # ── Verify output ──────────────────────────────────────────────────────
       - name: Verify build output
         shell: bash
         run: |
-          echo "=== dist-desktop contents ==="
-          ls -lh dist-desktop/ 2>/dev/null || echo "ERROR: dist-desktop not found!"
-          # Fail the job if no installer was produced
+          ls -lh dist-desktop/
           if [ -z "$(ls dist-desktop/*.exe dist-desktop/*.dmg 2>/dev/null)" ]; then
-            echo "No installer found — build failed."
+            echo "No installer found."
             exit 1
           fi
 
-      # ── Upload artifacts (always, so you can download from Actions UI) ─────
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: dist-desktop/${{ matrix.artifact_ext }}
           if-no-files-found: error
-          retention-days: 30
 
-      # ── Resolve the tag to attach the release to ───────────────────────────
+  # ───────────────────────────────────────────────────────────────────────────
+  # Job 3 – Create Release and Attach All Artifacts
+  # ───────────────────────────────────────────────────────────────────────────
+  release:
+    name: Create GitHub Release
+    needs: [auto_tag, build]
+    runs-on: ubuntu-latest
+    if: always() && (needs.build.result == 'success')
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./release-artifacts
+          merge-multiple: true
+
       - name: Resolve release tag
         id: resolve_tag
         shell: bash
@@ -250,12 +217,10 @@ jobs:
           elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
             echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
           else
-            # Triggered from main/master → use the tag auto_tag just created
             echo "tag=${{ needs.auto_tag.outputs.new_tag }}" >> "$GITHUB_OUTPUT"
           fi
 
-      # ── Attach installer to GitHub Release ────────────────────────────────
-      - name: Attach to GitHub Release
+      - name: Create or Update Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.resolve_tag.outputs.tag }}
@@ -263,8 +228,6 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
-          files: |
-            dist-desktop/*.exe
-            dist-desktop/*.dmg
+          files: ./release-artifacts/**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
