@@ -998,7 +998,7 @@ class Sales extends Secure_Controller
      */
     public function getDownloadPdf(int $sale_id)
     {
-        $this->receipt_pdf = new \App\Libraries\Receipt_pdf();
+        $this->receipt_pdf = new Receipt_pdf();
         $filepath = $this->receipt_pdf->get_receipt_file($sale_id);
         
         if ($filepath && file_exists($filepath)) {

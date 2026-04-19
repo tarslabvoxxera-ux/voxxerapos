@@ -105,27 +105,33 @@ if ($tax_text) {
 }
 $bill_msg .= "💰 *Total: {$currency}{$grand_total}*\n";
 $bill_msg .= "━━━━━━━━━━━━━━━━━━\n";
+$bill_msg .= "📄 *Your E-Receipt:* {$pdf_link}\n";
+$bill_msg .= "━━━━━━━━━━━━━━━━━━\n";
 $bill_msg .= "🙏 Thank you for shopping at *{$company}*!\n";
 $bill_msg .= "We look forward to seeing you again. 😊";
-
-$pdf_link = site_url("sales/downloadPdf/$sale_id_num");
-
-$thank_msg  = "Dear " . strtoupper($cust_name) . ",\n\n";
-$thank_msg .= "Thank you for shopping at {$company}.\n\n";
-$thank_msg .= "We appreciate you for being our valued customer and look forward to serving you again.\n\n";
-$thank_msg .= "To view your E-Receipt, Click here {$pdf_link}\n\n";
-$thank_msg .= "Team {$company}.";
 
 $points_text = '';
 if (!empty($customer_rewards) && isset($customer_rewards['points'])) {
     $pts = (int)$customer_rewards['points'];
     if ($pts > 0) {
-        $points_text = "🏅 *Your Reward Points:* {$pts}\n";
+        $points_text  = "\n━━━━━━━━━━━━━━━━━━\n";
+        $points_text .= "🏅 *Reward Points Balance: {$pts} pts*\n";
+        if ($pts >= 1000) {
+            $points_text .= "🎉 You've unlocked a 5% discount on your next purchase!";
+        } else {
+            $points_text .= (1000 - $pts) . " more points to unlock 5% off!";
+        }
     }
 }
 
-$wa_bill_url  = !empty($wa_phone) ? 'https://wa.me/' . $wa_phone . '?text=' . rawurlencode($bill_msg . ($points_text ? "\n" . $points_text : '')) : '';
-$wa_thank_url = !empty($wa_phone) ? 'https://wa.me/' . $wa_phone . '?text=' . rawurlencode($thank_msg) : '';
+$thank_msg  = "Dear " . strtoupper($cust_name) . ",\n\n";
+$thank_msg .= "Thank you for shopping at {$company}.\n\n";
+$thank_msg .= "We appreciate you for being our valued customer and look forward to serving you again.\n\n";
+$thank_msg .= "📄 *Your E-Receipt:* {$pdf_link}\n\n";
+$thank_msg .= "Team {$company}.";
+
+$wa_bill_url  = !empty($wa_phone) ? 'https://wa.me/' . $wa_phone . '?text=' . rawurlencode($bill_msg . $points_text) : '';
+$wa_thank_url = !empty($wa_phone) ? 'https://wa.me/' . $wa_phone . '?text=' . rawurlencode($thank_msg . $points_text) : '';
 ?>
 
 <?= view('partial/print_receipt', ['print_after_sale' => $print_after_sale, 'selected_printer' => 'receipt_printer']) ?>

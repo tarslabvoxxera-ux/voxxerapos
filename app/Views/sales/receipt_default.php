@@ -1,4 +1,3 @@
-<?php
 /**
  * @var string $transaction_time
  * @var int $sale_id
@@ -14,8 +13,9 @@
  * @var float $amount_change
  * @var string $barcode
  * @var array $config
+ * @var string|null $customer
+ * @var array|null $customer_rewards
  */
-?>
 
 <div id="receipt_wrapper" style="font-size: <?= $config['receipt_font_size'] ?>px;">
     <div id="receipt_header">
@@ -37,7 +37,7 @@
 
     <div id="receipt_general_info">
         <?php if (isset($customer)) { ?>
-            <div id="customer"><?= lang('Customers.customer') . esc(": $customer") ?></div>
+            <div id="customer"><?= lang('Customers.customer') . esc(": " . (string)($customer ?? '')) ?></div>
         <?php } ?>
 
         <div id="sale_id"><?= lang('Sales.id') . esc(": $sale_id") ?></div>
