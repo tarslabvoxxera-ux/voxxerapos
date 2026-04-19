@@ -91,6 +91,8 @@ if (!empty($taxes)) {
     }
 }
 
+$pdf_link = site_url("sales/downloadPdf/$sale_id_num");
+
 $bill_msg = "🧾 *Bill from {$company}*\n";
 $bill_msg .= "━━━━━━━━━━━━━━━━━━\n";
 $bill_msg .= "👤 Customer: {$cust_name}\n";
