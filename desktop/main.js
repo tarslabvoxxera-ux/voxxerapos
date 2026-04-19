@@ -57,19 +57,41 @@ function findFreePort(startPort) {
  * Windows : C:\Users\<user>\AppData\Roaming\Voxxera POS\
  * macOS   : ~/Library/Application Support/Voxxera POS/
  */
-function ensureUserDataDirs(userDataPath) {
+function ensureUserDataDirs(userDataPath, rootPath) {
     const dirs = [
         'writable/logs',
         'writable/session',
         'writable/cache',
         'writable/uploads',
         'writable/debugbar',
-        'database',         // SQLite or MySQL dump backups
+        'writable/receipts',
+        'database',
     ];
     for (const dir of dirs) {
         const fullPath = path.join(userDataPath, dir);
         if (!fs.existsSync(fullPath)) {
             fs.mkdirSync(fullPath, { recursive: true });
+        }
+    }
+
+    // ── Seed SQLite on first launch ──────────────────────────────────────
+    // CI4 SQLite3 driver prepends WRITEPATH when the database name has no
+    // path separator.  We instead pass the absolute path directly, but we
+    // still need the file to exist in a writable location.
+    const sqliteDest = path.join(userDataPath, 'writable', 'voxxera.sqlite');
+    if (!fs.existsSync(sqliteDest)) {
+        // Try bundled live DB first, then the clean schema DB as fallback
+        const candidates = [
+            path.join(rootPath, 'voxxera-live.sqlite'),
+            path.join(rootPath, 'voxxera.sqlite'),
+            path.join(rootPath, 'voxxera-clean.sqlite'),
+        ];
+        for (const src of candidates) {
+            if (fs.existsSync(src)) {
+                fs.copyFileSync(src, sqliteDest);
+                console.log(`[DB] Seeded SQLite from ${src}`);
+                break;
+            }
         }
     }
 }
@@ -121,8 +143,9 @@ async function startPhpServer() {
 
     // ── Persistent data directory ───────────────────────────────────────────
     const userDataPath = app.getPath('userData');
-    ensureUserDataDirs(userDataPath);
+    ensureUserDataDirs(userDataPath, rootPath);
     const writablePath = path.join(userDataPath, 'writable') + path.sep;
+    const sqlitePath  = path.join(writablePath, 'voxxera.sqlite');
     const dbPath = path.join(userDataPath, 'database');
 
     // ── Start Portable MariaDB ──────────────────────────────────────────────
@@ -182,10 +205,13 @@ async function startPhpServer() {
         cwd: rootPath,
         env: {
             ...process.env,
-            'WRITEPATH': writablePath,
+            'VOXXERA_WRITEPATH': writablePath,
             'CI_ENVIRONMENT': 'production',
-            'database.default.hostname': '127.0.0.1',
-            'database.default.port': dbPort.toString()
+            // Pass absolute SQLite path — CI4 SQLite3 driver skips WRITEPATH
+            // prefix when the value contains a directory separator.
+            'database.default.DBDriver': 'SQLite3',
+            'database.default.database': sqlitePath,
+            'database.default.DBPrefix': 'ospos_',
         },
     });
 
@@ -337,9 +363,9 @@ app.on('ready', async () => {
 });
 
 app.on('window-all-closed', () => {
-    if (phpServer) phpServer.kill();
-    if (mariadbServer) mariadbServer.kill();
     if (process.platform !== 'darwin') {
+        if (phpServer) phpServer.kill();
+        if (mariadbServer) mariadbServer.kill();
         app.quit();
     }
 });

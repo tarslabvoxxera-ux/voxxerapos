@@ -45,6 +45,7 @@
             "writable/**/*",
             "spark",
             ".env",
+            "*.sqlite",
             "!writable/logs/**",
             "!writable/session/**",
             "!writable/cache/**",

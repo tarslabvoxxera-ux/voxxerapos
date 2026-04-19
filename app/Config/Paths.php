@@ -55,7 +55,19 @@ class Paths
      * for maximum security, keeping it out of the app and/or
      * system directories.
      */
-    public string $writableDirectory = __DIR__ . '/../../writable';
+    // When running inside the Electron desktop app on macOS/Windows the app
+    // bundle is read-only.  Electron sets VOXXERA_WRITEPATH to a user-data
+    // folder (e.g. ~/Library/Application Support/Voxxera POS/writable) so
+    // that logs, cache, sessions and uploads are stored in a writable location.
+    public string $writableDirectory = '';
+
+    public function __construct()
+    {
+        $envWritable = getenv('VOXXERA_WRITEPATH');
+        $this->writableDirectory = ($envWritable !== false && $envWritable !== '')
+            ? rtrim($envWritable, '/\\')
+            : __DIR__ . '/../../writable';
+    }
 
     /**
      * ---------------------------------------------------------------
