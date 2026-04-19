@@ -5,7 +5,8 @@ import os from 'os';
 import net from 'net';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
-import { autoUpdater } from 'electron-updater';
+import electronUpdaterPkg from 'electron-updater';
+const { autoUpdater } = electronUpdaterPkg;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

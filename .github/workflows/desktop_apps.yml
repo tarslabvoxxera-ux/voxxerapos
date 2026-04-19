@@ -26,7 +26,6 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Job 1 – Auto-tag on push to main/master
@@ -160,17 +159,13 @@ jobs:
           Expand-Archive -Path mariadb.zip -DestinationPath . -Force
           Move-Item mariadb-10.6.14-winx64\* desktop\bin\mariadb\
 
-      - name: Bundle System PHP & MariaDB (macOS)
+      - name: Bundle System PHP (macOS)
         if: matrix.os == 'macos-12'
         run: |
           mkdir -p desktop/bin/php
           cp $(which php) desktop/bin/php/php
           chmod +x desktop/bin/php/php
           desktop/bin/php/php -v
-
-          mkdir -p desktop/bin/mariadb
-          curl -L -o mariadb.tar.gz https://archive.mariadb.org/mariadb-10.6.14/bintar-macos-x86_64/mariadb-10.6.14-osx10.14-x86_64.tar.gz
-          tar -xzf mariadb.tar.gz --strip-components=1 -C desktop/bin/mariadb
 
       - name: Build Desktop App
         env:
