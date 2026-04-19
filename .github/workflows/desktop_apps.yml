@@ -131,7 +131,7 @@ jobs:
       - name: Install NPM Dependencies
         run: npm install
 
-      - name: Bundle Portable PHP (Windows)
+      - name: Bundle Portable PHP & MariaDB (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
@@ -141,29 +141,36 @@ jobs:
           Copy-Item "$phpDir\*" "desktop\bin\php\" -Recurse -Force
           & "desktop\bin\php\php.exe" -v
           
-          # Fix: Heredoc must NOT have indentation
-          $ini = @"
-extension_dir = "ext"
-extension=mysqli
-extension=pdo_mysql
-extension=pdo_sqlite
-extension=mbstring
-extension=curl
-extension=gd
-extension=intl
-extension=zip
-extension=fileinfo
-extension=openssl
-"@
+          $ini = "extension_dir = `"ext`"`n" +
+                 "extension=mysqli`n" +
+                 "extension=pdo_mysql`n" +
+                 "extension=pdo_sqlite`n" +
+                 "extension=mbstring`n" +
+                 "extension=curl`n" +
+                 "extension=gd`n" +
+                 "extension=intl`n" +
+                 "extension=zip`n" +
+                 "extension=fileinfo`n" +
+                 "extension=openssl"
           Add-Content "desktop\bin\php\php.ini" $ini
 
-      - name: Bundle System PHP (macOS)
+          # Bundle MariaDB for Windows
+          New-Item -ItemType Directory -Force -Path desktop/bin/mariadb | Out-Null
+          Invoke-WebRequest -Uri "https://archive.mariadb.org/mariadb-10.6.14/winx64-packages/mariadb-10.6.14-winx64.zip" -OutFile mariadb.zip
+          Expand-Archive -Path mariadb.zip -DestinationPath . -Force
+          Move-Item mariadb-10.6.14-winx64\* desktop\bin\mariadb\
+
+      - name: Bundle System PHP & MariaDB (macOS)
         if: matrix.os == 'macos-12'
         run: |
           mkdir -p desktop/bin/php
           cp $(which php) desktop/bin/php/php
           chmod +x desktop/bin/php/php
           desktop/bin/php/php -v
+
+          mkdir -p desktop/bin/mariadb
+          curl -L -o mariadb.tar.gz https://archive.mariadb.org/mariadb-10.6.14/bintar-macos-x86_64/mariadb-10.6.14-osx10.14-x86_64.tar.gz
+          tar -xzf mariadb.tar.gz --strip-components=1 -C desktop/bin/mariadb
 
       - name: Build Desktop App
         env:

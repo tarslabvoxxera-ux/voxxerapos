@@ -1,17 +1,22 @@
-import { app, BrowserWindow, shell, dialog } from 'electron';
+import { app, BrowserWindow, shell, dialog, ipcMain } from 'electron';
 import path from 'path';
 import { spawn } from 'child_process';
 import os from 'os';
 import net from 'net';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import { autoUpdater } from 'electron-updater';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let mainWindow;
 let phpServer;
+let mariadbServer;
 let port = 8080;
+
+// ── Auto-Updater Setup ──────────────────────────────────────────────────────
+autoUpdater.autoDownload = false;
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -114,25 +119,59 @@ async function startPhpServer() {
     }
 
     // ── Persistent data directory ───────────────────────────────────────────
-    // Store logs, sessions, cache and uploads in the OS user-data folder so
-    // that data is never lost when the app is updated or re-installed.
     const userDataPath = app.getPath('userData');
     ensureUserDataDirs(userDataPath);
-
-    // Point CodeIgniter 4's WRITEPATH to the persistent directory.
-    // CI4 respects the WRITEPATH environment variable if set.
     const writablePath = path.join(userDataPath, 'writable') + path.sep;
+    const dbPath = path.join(userDataPath, 'database');
+
+    // ── Start Portable MariaDB ──────────────────────────────────────────────
+    let dbPort = 3306; // Fallback to external
+    const bundledMaria = path.join(process.resourcesPath, 'bin', 'mariadb');
+    if (fs.existsSync(bundledMaria)) {
+        dbPort = 33089; // Use custom port to avoid conflicts
+        const mariadbDataPath = path.join(dbPath, 'data');
+        const socketPath = path.join(dbPath, 'mysql.sock');
+
+        if (!fs.existsSync(mariadbDataPath)) {
+            // First run: Initialize database
+            const installBin = process.platform === 'win32' 
+                ? path.join(bundledMaria, 'bin', 'mysql_install_db.exe')
+                : path.join(bundledMaria, 'scripts', 'mysql_install_db');
+                
+            try {
+                const { execSync } = await import('child_process');
+                execSync(`"${installBin}" --basedir="${bundledMaria}" --datadir="${mariadbDataPath}"`, { stdio: 'ignore' });
+                
+                // Initialize default database dump if exists
+                const initSql = path.join(rootPath, 'app', 'Database', 'database.sql');
+                if (fs.existsSync(initSql)) {
+                    // Start temporarily to import, but this may be tricky in Electron shell, 
+                    // CI4 migrations ideally handle seeds, or the user simply restores a backup.
+                }
+            } catch (e) {
+                console.error("MariaDB init failed: ", e);
+            }
+        }
+
+        const daemonBin = process.platform === 'win32'
+            ? path.join(bundledMaria, 'bin', 'mysqld.exe')
+            : path.join(bundledMaria, 'bin', 'mariadbd');
+
+        mariadbServer = spawn(daemonBin, [
+            `--basedir=${bundledMaria}`,
+            `--datadir=${mariadbDataPath}`,
+            `--port=${dbPort}`,
+            `--socket=${socketPath}`
+        ]);
+        
+        mariadbServer.stdout.on('data', d => console.log(`[DB] ${d}`));
+        mariadbServer.stderr.on('data', d => console.error(`[DB] ${d}`));
+    }
 
     const rewriteScript = path.join(
         rootPath,
         'vendor', 'codeigniter4', 'framework', 'system', 'rewrite.php'
     );
-
-    console.log(`[Voxxera] PHP binary : ${phpBinary}`);
-    console.log(`[Voxxera] Root path  : ${rootPath}`);
-    console.log(`[Voxxera] Public path: ${publicPath}`);
-    console.log(`[Voxxera] Writable   : ${writablePath}`);
-    console.log(`[Voxxera] Port       : ${port}`);
 
     phpServer = spawn(phpBinary, [
         '-S', `0.0.0.0:${port}`,
@@ -142,8 +181,10 @@ async function startPhpServer() {
         cwd: rootPath,
         env: {
             ...process.env,
-            WRITEPATH: writablePath,
-            CI_ENVIRONMENT: 'production',
+            'WRITEPATH': writablePath,
+            'CI_ENVIRONMENT': 'production',
+            'database.default.hostname': '127.0.0.1',
+            'database.default.port': dbPort.toString()
         },
     });
 
@@ -216,7 +257,76 @@ function createWindow() {
         shell.openExternal(url);
         return { action: 'deny' };
     });
+
+    // ── Auto-Updater ────────────────────────────────────────────────────────
+    autoUpdater.checkForUpdatesAndNotify();
+
+    autoUpdater.on('update-available', () => {
+        dialog.showMessageBox(mainWindow, {
+            type: 'info',
+            title: 'Update Available',
+            message: 'A new version of Voxxera POS is available. Do you want to download it now?',
+            buttons: ['Yes', 'No']
+        }).then((result) => {
+            if (result.response === 0) autoUpdater.downloadUpdate();
+        });
+    });
+
+    autoUpdater.on('update-downloaded', () => {
+        dialog.showMessageBox(mainWindow, {
+            type: 'question',
+            title: 'Install Update',
+            message: 'Update downloaded. The application will restart to install it.',
+            buttons: ['Restart Now', 'Later']
+        }).then((result) => {
+            if (result.response === 0) autoUpdater.quitAndInstall();
+        });
+    });
 }
+
+// ── Database Backup & Restore ──────────────────────────────────────────────
+
+ipcMain.handle('backup-db', async () => {
+    const userDataPath = app.getPath('userData');
+    // For SQLite, this points to database directory or voxxera.sqlite
+    const dbPath = path.join(userDataPath, 'database'); 
+
+    if (!fs.existsSync(dbPath)) return { success: false, msg: 'No database found to backup.' };
+    
+    // Pick save location via standard Electron dialog window
+    const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+        title: 'Export Database Backup',
+        defaultPath: 'voxxera_backup',
+    });
+
+    if (canceled || !filePath) return { success: false, msg: 'Canceled by user.' };
+
+    try {
+        fs.cpSync(dbPath, filePath, { recursive: true });
+        return { success: true, msg: 'Backup exported successfully!' };
+    } catch (e) {
+        return { success: false, msg: e.message };
+    }
+});
+
+ipcMain.handle('restore-db', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+        title: 'Restore Database',
+        properties: ['openDirectory', 'openFile']
+    });
+
+    if (canceled || filePaths.length === 0) return { success: false, msg: 'Canceled by user.' };
+
+    try {
+        const userDataPath = app.getPath('userData');
+        const dbPath = path.join(userDataPath, 'database');
+        
+        fs.cpSync(filePaths[0], dbPath, { recursive: true });
+        return { success: true, msg: 'Database restored! Please restart the app.' };
+    } catch (e) {
+        return { success: false, msg: e.message };
+    }
+});
 
 // ── App lifecycle ──────────────────────────────────────────────────────────
 
@@ -227,6 +337,7 @@ app.on('ready', async () => {
 
 app.on('window-all-closed', () => {
     if (phpServer) phpServer.kill();
+    if (mariadbServer) mariadbServer.kill();
     if (process.platform !== 'darwin') {
         app.quit();
     }
@@ -240,4 +351,5 @@ app.on('activate', () => {
 
 app.on('will-quit', () => {
     if (phpServer) phpServer.kill();
+    if (mariadbServer) mariadbServer.kill();
 });
