@@ -884,7 +884,18 @@ class Sales extends Secure_Controller
                 $data['error_message'] = lang('Sales.transaction_failed');
             } else {
                 $data['barcode'] = $this->barcode_lib->generate_receipt_barcode($data['sale_id']);
-                
+
+                // Refresh customer rewards points AFTER sale is saved so receipt shows updated balance
+                if ($customer_id != NEW_ENTRY) {
+                    $fresh_info  = $this->customer->get_info($customer_id);
+                    $package_id  = $fresh_info->package_id ?? null;
+                    if (!empty($package_id)) {
+                        $data['customer_rewards']['points']       = (int)($fresh_info->points ?? 0);
+                        $data['customer_rewards']['package_name'] = $this->customer_rewards->get_name($package_id);
+                        $data['customer_rewards']['package_id']   = $package_id;
+                    }
+                }
+
                 // Auto-save receipt PDF to server
                 $this->receipt_pdf->save_receipt($data['sale_id_num'], $data);
                 

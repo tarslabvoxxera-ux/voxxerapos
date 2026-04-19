@@ -116,7 +116,15 @@ $thank_msg .= "We appreciate you for being our valued customer and look forward 
 $thank_msg .= "To view your E-Receipt, Click here {$pdf_link}\n\n";
 $thank_msg .= "Team {$company}.";
 
-$wa_bill_url  = !empty($wa_phone) ? 'https://wa.me/' . $wa_phone . '?text=' . rawurlencode($bill_msg) : '';
+$points_text = '';
+if (!empty($customer_rewards) && isset($customer_rewards['points'])) {
+    $pts = (int)$customer_rewards['points'];
+    if ($pts > 0) {
+        $points_text = "🏅 *Your Reward Points:* {$pts}\n";
+    }
+}
+
+$wa_bill_url  = !empty($wa_phone) ? 'https://wa.me/' . $wa_phone . '?text=' . rawurlencode($bill_msg . ($points_text ? "\n" . $points_text : '')) : '';
 $wa_thank_url = !empty($wa_phone) ? 'https://wa.me/' . $wa_phone . '?text=' . rawurlencode($thank_msg) : '';
 ?>
 

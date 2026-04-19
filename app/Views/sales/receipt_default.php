@@ -168,6 +168,18 @@
         <?= nl2br($config['return_policy']) ?>
     </div>
 
+    <?php if (!empty($customer_rewards) && isset($customer_rewards['points']) && $customer_rewards['points'] > 0): ?>
+    <div id="reward_points_info" style="text-align:center; margin: 8px 0; padding: 6px; border-top: 1px dashed #999; border-bottom: 1px dashed #999; font-size: 12px;">
+        <strong>🏅 Reward Points Balance: <?= (int)$customer_rewards['points'] ?> pts</strong>
+        <?php if ((int)$customer_rewards['points'] >= 1000): ?>
+        <br><span style="color: green; font-weight: bold;">🎉 Congratulations! You have earned a 5% discount on your next purchase!</span>
+        <?php else: ?>
+        <br><span><?= 1000 - (int)$customer_rewards['points'] ?> more points to unlock 5% off!</span>
+        <?php endif; ?>
+        <br><small>Every ₹20 spent = 1 point</small>
+    </div>
+    <?php endif; ?>
+
     <div id="barcode">
         <?= $barcode ?><br>
         <?= $sale_id ?>
