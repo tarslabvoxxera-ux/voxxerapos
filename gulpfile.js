@@ -293,7 +293,6 @@ gulp.task('build-database', function() {
 // Run all required tasks
 gulp.task('default',
     gulp.series('clean',
-        'update-licenses',
         'copy-bootswatch',
         'copy-bootswatch5',
         'copy-bootstrap',
